@@ -12,7 +12,8 @@ cv2.namedWindow('Webcam')
 vid = cv2.VideoCapture(0)
 
 if vid.isOpened():
-    val, frame = vid.read()
+    
+    val, frame = vid.read() 
 else:
     val = False
 
