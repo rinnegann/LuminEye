@@ -1,14 +1,8 @@
 """Copyright(C) Univercity Malta-All Rights Reserved Unauthorized copying of this file,via any medium is stricly prohibited
    Proprietary and confidential Written by Nipun Sandamal<nipunsandamal1997@gmal.com>"""
    
-import cv2
-import numpy as np
-import os
-import random
-import glob
-import matplotlib.pyplot as plt
-import numpy as np
 
+        
 
 class DatasetVisualizer:
     def __init__(self, dataset_path: str, dataset_name: str):
@@ -89,16 +83,24 @@ class DatasetVisualizer:
 
 
 if __name__ == "__main__":
+    
+    ###############################################################################
+    # DataSetName = "BioId"
+    # DataSetPath = "/home/nipun/Documents/Uni_Malta/Datasets/BioID-FaceDatabase-V1.2/"
 
-    DataSetName = "BioId"
-    DataSetPath = "/home/nipun/Documents/Uni_Malta/Datasets/BioID-FaceDatabase-V1.2/"
+    # DV = DatasetVisualizer(DataSetPath, DataSetName)
 
-    DV = DatasetVisualizer(DataSetPath, DataSetName)
-
-    DV.visualize_datasets("eye")
+    # DV.visualize_datasets("eye")
+    
+    ###############################################################################
     # DataSetName = "gi4e"
     # DataSetPath = "/home/nipun/Documents/Uni_Malta/Datasets/gi4e_database/"
 
     # DV = DatasetVisualizer( DataSetPath, DataSetName)
 
     # DV.visualize_datasets("txt")
+    ###############################################################################
+    #UBRIS Visualtions
+    IMG_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/"
+    SAVE_DIR = "visualization"
+    BinaryMaskToBBOX(IMG_DIR,"train_img","train_masks",SAVE_DIR)[4]
