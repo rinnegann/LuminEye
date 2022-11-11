@@ -52,8 +52,8 @@ class UBRIS:
         return len(self.image_path)
     
     def __getitem__(self,idx):
-        img = cv2.cvtColor(cv2.imread(self.image_path[idx]) , cv2.COLOR_BGR2RGB)
-        target = cv2.imread(self.target_path[idx] , cv2.IMREAD_GRAYSCALE)
+        img = cv2.resize(cv2.cvtColor(cv2.imread(self.image_path[idx]) , cv2.COLOR_BGR2RGB),(512,512))
+        target = cv2.resize(cv2.imread(self.target_path[idx] , cv2.IMREAD_GRAYSCALE),(512,512))
         
         target = np.where( target > 0,255,0)
         
@@ -118,6 +118,8 @@ model = smp.UnetPlusPlus("resnet50",encoder_weights="imagenet",classes=2,activat
 
 model  = model.to(device)
 
+
+
 print(summary(model,input_size= (3,512, 512)))
 
 def pixel_wise_accuracy(output , mask):
@@ -177,7 +179,15 @@ def jaccard_loss(true, logits, eps=1e-7):
 
 def DiceBceLoss(true, logits, eps=1e-7):
     
-    # print(f"True Value: {true}")
+    # z = torch.eye(2)[true.to("cpu").squeeze(1)]
+    
+    # print(f"Identity Matrix: {z.size()}")
+    
+    print(f"True  Value: {true.size()}")
+    
+    print(f"True  Squeeze Value: {true.squeeze(1).size()}")
+    
+    print(f"Predicted Value: {logits.size()}")
     
     num_classes = logits.shape[1]
     
