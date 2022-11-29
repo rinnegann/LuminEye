@@ -8,7 +8,7 @@ import torch.nn as nn
 
 from data import UBRIS
 from model import UNET
-from loss import DiceLoss, DiceBCELoss
+from loss import *
 from utils import *
 import math
 import wandb
@@ -19,8 +19,10 @@ import albumentations.augmentations.functional as F
 from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm
 
-def train(model, loader, optimizer, loss_fn, epoch,device):
+def train(model, loader, optimizer,epoch,device):
     epoch_loss = 0.0
+    iou_score = 0
+    accuracy = 0
 
     metric_monitor = MetricMonitor()
     model.train()
@@ -35,12 +37,14 @@ def train(model, loader, optimizer, loss_fn, epoch,device):
         # print(f"Train X size {images.size()}")
         # print(f"Train Y Size {masks.size()}")
         
-        y_pred = model(images).squeeze(1)
+        y_pred = model(images)
         
         
         # print(f"Y pred shape {y_pred.size()}")
         
-        loss = loss_fn(y_pred,masks)
+        loss = DiceBceLoss(y_pred,masks)
+        iou_score += IoU(y_pred,masks)
+        accuracy = pixel_wise_accuracy(y_pred,masks)
         
         
         metric_monitor.update("Loss",loss.item())
@@ -55,11 +59,13 @@ def train(model, loader, optimizer, loss_fn, epoch,device):
         epoch_loss += loss.item()
         
     epoch_loss = epoch_loss/len(loader)
+    iou_score = iou_score/len(loader)
+    accuracy = accuracy/len(loader)
 
-    return epoch_loss
+    return epoch_loss,iou_score,accuracy
 
 
-def evaluate(model, loader, loss_fn,epoch,device):
+def evaluate(model, loader,epoch,device):
     """ Caculate the Validation loss per epoch
 
     Args:
@@ -73,6 +79,9 @@ def evaluate(model, loader, loss_fn,epoch,device):
         _float32_: validation loss per epoch
     """
     epoch_loss = 0.0
+    iou_score = 0.0
+    test_accuracy = 0
+    
     metric_monitor = MetricMonitor()
     model.eval()
     stream = tqdm(loader)
@@ -82,7 +91,10 @@ def evaluate(model, loader, loss_fn,epoch,device):
             y = y.to(device,dtype = torch.float32)
 
             y_pred = model(x)
-            loss = loss_fn(y_pred, y)
+            # loss = loss_fn(y_pred, y)
+            loss = jaccard_loss(y_pred, y)
+            iou_score += IoU(y_pred,y)
+            test_accuracy += jaccard_loss(y_pred,y)
             
             metric_monitor.update("Loss", loss.item())
             epoch_loss += loss.item()
@@ -92,7 +104,9 @@ def evaluate(model, loader, loss_fn,epoch,device):
             )
 
         epoch_loss = epoch_loss/len(loader)
-    return epoch_loss
+        iou_loss = iou_loss/len(loader)
+        accuracy = accuracy/len(loader)
+    return epoch_loss,iou_score,accuracy
 
 def getting_trainval_local(trarin_img,train_mask,valid_img,valid_masks):
     """Getting training and validation images & masks from local
@@ -140,15 +154,12 @@ def create_train_val_dataLoader(train_x,train_y,valid_x,valid_y,config,visualize
             A.RGBShift(r_shift_limit=25, g_shift_limit=25,
                        b_shift_limit=25, p=0.5),
             A.RandomBrightnessContrast(
-                brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2(),
+                brightness_limit=0.3, contrast_limit=0.3, p=0.5)
         ]
     )
         
         val_transform = A.Compose(
-        [A.Resize(config["image_height"],config["image_width"]), A.Normalize(mean=(0.485, 0.456, 0.406),
-                                         std=(0.229, 0.224, 0.225)), ToTensorV2()]
+        [A.Resize(config["image_height"],config["image_width"])]
     )
         train_dataset = UBRIS(train_x, train_y, transform=train_transform)
         valid_dataset = UBRIS(valid_x, valid_y, transform=val_transform)
@@ -198,7 +209,7 @@ def main(*args):
 
     optimizer = torch.optim.Adam(model.parameters(),lr=config["learning_rate"])
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,"min",patience=5,verbose=True)
-    loss_fn = DiceBCELoss()
+    # loss_fn = DiceBCELoss()
     
     
     
@@ -209,12 +220,14 @@ def main(*args):
     for epoch in range(config["epochs"]):
         start_time = time.time()
 
-        train_loss= train(model,train_loader,optimizer,loss_fn,loss_fn,device)
-        valid_loss = evaluate(model,val_loader, loss_fn,epoch ,device)
+        train_loss,train_iou,train_accuracy= train(model, train_loader, optimizer, epoch, device)
+        
+        valid_loss,val_iou,val_accuracy = evaluate(model,val_loader,epoch ,device)
 
-        train_metrics = {"train/epoch":epoch+1,"train/train_loss": train_loss}
+        train_metrics = {"train/epoch":epoch+1,"train/train_loss": train_loss,"train/accuracy": train_accuracy,"train/IoU":train_iou}
 
-        val_metrics = {"val/epoch":epoch+1,"val/val_loss": valid_loss}
+        
+        val_metrics = {"val/epoch":epoch+1,"val/val_loss": valid_loss,"val/val_accuracy": val_accuracy,"val/IoU":val_iou}
 
         if valid_loss < best_valid_loss:
             print(f"Valid loss improved from {best_valid_loss:2.4f} to {valid_loss:2.4f}. Saving checkpoint: {checkpoint_path}")

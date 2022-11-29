@@ -294,7 +294,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                 decrease += 1
                 if decrease % 5 == 0:
                     print('saving model...')
-                    model_name = "{}_model_{}val_iou{:.3f}".format("Miche",get_current_date_time(),val_iou_score/len(val_loader))
+                    model_name = "{}_model_{}val_iou{:.3f}.pt".format("Miche",get_current_date_time(),val_iou_score/len(val_loader))
                     
                     torch.save(model,model_name)
                     

@@ -38,7 +38,7 @@ def dense_target(tar:np.ndarray):
     
     return dummy
 
-class UBRIS:
+class IRIS:
     def __init__(self,image_path,target_path,mean,std,transform=None,test=False):
         
         self.image_path = image_path
@@ -99,8 +99,8 @@ valid_x = sorted(
 valid_y = sorted(
         glob(f"{val_masks }/*"))
 
-train_set = UBRIS(train_x,train_y,mean, std)
-val_set = UBRIS(valid_x ,valid_y,mean , std)
+train_set = IRIS(train_x,train_y,mean, std)
+val_set = IRIS(valid_x ,valid_y,mean , std)
 
 batch_size = 2
 train_loader= DataLoader(train_set , batch_size= batch_size , shuffle =True)
@@ -348,16 +348,19 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
     print('Total time: {:.2f} m' .format((time.time()- fit_time)/60))
     return history
 
-experiment_name =  "Unet_plus_plus_with_resnet50_backbone_experiment_epoch_50"
-max_lr = 1e-3
-epoch = 50
-weight_decay = 1e-6
+if __name__ == '__main__':
+    
 
-optimizer = torch.optim.Adam(model.parameters(), lr=max_lr, weight_decay=weight_decay)
-sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epoch,
-                                            steps_per_epoch=len(train_loader))
+    experiment_name =  "Unet_plus_plus_with_resnet50_backbone_experiment_epoch_50"
+    max_lr = 1e-3
+    epoch = 50
+    weight_decay = 1e-6
 
-wandb.init(project="LuminEys-Iris",entity="rinnegann",name=experiment_name,config={"epochs":epoch,"max_learning_rate":max_lr,
-                                                                                   "weight_decay":weight_decay})
+    optimizer = torch.optim.Adam(model.parameters(), lr=max_lr, weight_decay=weight_decay)
+    sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epoch,
+                                                steps_per_epoch=len(train_loader))
 
-history = fit(epoch, model, train_loader, val_loader, optimizer, sched)
+    wandb.init(project="LuminEys-Iris",entity="rinnegann",name=experiment_name,config={"epochs":epoch,"max_learning_rate":max_lr,
+                                                                                    "weight_decay":weight_decay})
+
+    history = fit(epoch, model, train_loader, val_loader, optimizer, sched)
