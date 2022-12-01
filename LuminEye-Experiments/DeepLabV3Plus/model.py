@@ -22,6 +22,7 @@ import time
 from tqdm.notebook import tqdm
 from torchsummary import summary
 import segmentation_models_pytorch as smp
+from scrach_model import DeepLabv3Plus
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -146,12 +147,13 @@ print(f' x = min : {x.min()} ; max : {x.max()}')
 print(f' y = shape: {y.shape}; class : {y.unique()}; type: {y.dtype}')
 
 
-model = smp.DeepLabV3Plus('efficientnet-b3',encoder_weights='imagenet', classes = 2, encoder_output_stride =16, activation=None,
-                 encoder_depth= 5)
+model = DeepLabv3Plus(1024)
+# model = smp.DeepLabV3Plus('efficientnet-b3',encoder_weights='imagenet', classes = 2, encoder_output_stride =16, activation=None,
+#                  encoder_depth= 5)
 model=model.to(device)
 
 
-print(summary(model,input_size=(3,512,512)))
+# print(summary(model,input_size=(3,512,512)))
 
 def pixel_wise_accuracy(output , mask):
   with torch.no_grad():
