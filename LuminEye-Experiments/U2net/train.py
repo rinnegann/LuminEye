@@ -22,14 +22,41 @@ import time
 from tqdm.notebook import tqdm
 from torchsummary import summary
 import segmentation_models_pytorch as smp
-from model import R2U_Net,AttU_Net
+from custom_model import U2NET
 import warnings
 warnings.filterwarnings("ignore")
 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+print(f"Available devices:{device}")
+
 
 n_classes = 2
+
+def multi_dice_loss_function(y0, y1, y2,y3, y4, y5, y6,y):
+    loss_1 = DiceBceLoss(y, y0)
+            
+    loss_2 = DiceBceLoss(y, y1)
+            
+    loss_3 = DiceBceLoss(y, y2)
+             
+    loss_4 = DiceBceLoss(y, y3)
+      
+    loss_5 = DiceBceLoss(y, y4)
+      
+      
+    loss_6 = DiceBceLoss(y, y5)
+      
+      
+    loss_7 = DiceBceLoss(y, y6)
+      
+    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+    
+    return loss_1,loss
+
+
+
+
 
 def get_current_date_time():
     now = datetime.now()
@@ -148,16 +175,16 @@ print(f' y = shape: {y.shape}; class : {y.unique()}; type: {y.dtype}')
 
 
 
-# model = R2U_Net(img_ch=3,output_ch=2)
-
-#model = AttU_Net(img_ch=3,output_ch=2)
+model = U2NET(in_ch=3,out_ch=2)
 
 
-model.to(device)
-print(model)
+model=model.to(device)
+
+# print(next(model.parameters()).device)
 
 
-# print(summary(model,input_size=(1,3,416,416)))
+
+
 
 def pixel_wise_accuracy(output , mask):
   with torch.no_grad():
@@ -232,6 +259,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
     for e in range(epochs):
         since = time.time()
         running_loss = 0
+        running_target_loss = 0
         iou_score = 0
         accuracy = 0
         #training loop
@@ -247,11 +275,16 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             
             image = image_tiles.to(device); mask = mask_tiles.to(device);
             #forward
-            output = model(image)
-            loss = DiceBceLoss(mask, output)
+            
+            y0,y1,y2,y3,y4,y5,y6 = model(image)
+            # output = model(image)
+            
+            loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            
+            
             #evaluation metrics
-            iou_score += IoU(output, mask)
-            accuracy += pixel_wise_accuracy(output, mask)
+            iou_score += IoU(y0, mask)
+            accuracy += pixel_wise_accuracy(y0, mask)
             #backward
             loss.backward()
             optimizer.step() #update weight          
@@ -262,10 +295,12 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             scheduler.step() 
             
             running_loss += loss.item()
+            running_target_loss += loss_1.item()
             
         else:
             model.eval()
             test_loss = 0
+            test_target_loss = 0
             test_accuracy = 0
             val_iou_score = 0
             #validation loop
@@ -280,14 +315,18 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                         image_tiles = image_tiles.view(-1,c, h, w)
                         mask_tiles = mask_tiles.view(-1, h, w)
                     
-                    image = image_tiles.to(device); mask = mask_tiles.to(device);
-                    output = model(image)
+                    image = image_tiles.to(device); mask = mask_tiles.to(device);                
+                    y0_l,y1_l,y2_l,y3_l,y4_l,y5_l,y6_l = model(image)
                     #evaluation metrics
-                    val_iou_score +=  IoU(output, mask)
-                    test_accuracy += pixel_wise_accuracy(output, mask)
+                    val_iou_score +=  IoU(y0_l, mask)
+                    test_accuracy += pixel_wise_accuracy(y0_l, mask)
                     #loss
-                    loss = DiceBceLoss(mask, output)                                  
+                    
+                    loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    
+                                                    
                     test_loss += loss.item()
+                    test_target_loss += loss_1.item()
             
             #calculatio mean for each batch
             train_losses.append(running_loss/len(train_loader))
@@ -312,16 +351,23 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             val_acc.append(test_accuracy/ len(val_loader))
             print("Epoch:{}/{}..".format(e+1, epochs),
                   "Train Loss: {:.3f}..".format(running_loss/len(train_loader)),
+                  "Train Target Loss: {:.3f}..".format(running_target_loss/len(train_loader)),
                   "Val Loss: {:.3f}..".format(test_loss/len(val_loader)),
+                  "Val Target Loss: {:.3f}..".format(test_target_loss/len(val_loader)),
                   "Train IoU:{:.3f}..".format(iou_score/len(train_loader)),
                   "Val IoU: {:.3f}..".format(val_iou_score/len(val_loader)),
-                  "Train Acc:{:.3f}..".format(accuracy/len(train_loader)),
-                  "Val Acc:{:.3f}..".format(test_accuracy/len(val_loader)),
                   "Time: {:.2f}m".format((time.time()-since)/60))
             
-            train_metrics = {"train/epoch":e+1,"train/train_loss":running_loss/len(train_loader),"train/iou":iou_score/len(train_loader),"train/accuracy":accuracy/len(train_loader)}
+            train_metrics = {"train/epoch":e+1,"train/train_loss":running_loss/len(train_loader),
+                             "train/train_target_loss":running_target_loss/len(train_loader),
+                             "train/iou":iou_score/len(train_loader),
+                             "train/accuracy":accuracy/len(train_loader)}
     
-            val_metrics = {"train/epoch":e+1,"val/val_loss":test_loss/len(val_loader),"val/iou":val_iou_score/len(val_loader),"val/accuracy":test_accuracy/len(val_loader)}
+            val_metrics = {"val/epoch":e+1,
+                           "val/var_target_loss":test_target_loss/len(val_loader),
+                           "val/val_loss":test_loss/len(val_loader),
+                           "val/iou":val_iou_score/len(val_loader),
+                           "val/accuracy":test_accuracy/len(val_loader)}
 
             
             wandb.log({**train_metrics, **val_metrics})
