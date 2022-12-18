@@ -26,7 +26,7 @@ from custom_model import U2NET
 from focalLoss import FocalLoss
 import warnings
 
-# Withoout class weights
+
 
 
 warnings.filterwarnings("ignore")
@@ -39,12 +39,6 @@ n_classes = 2
 def multi_focal_losss(y0, y1, y2,y3, y4, y5, y6,y):
     
     criterion = FocalLoss(gamma=0.7)
-
-
-    
-    # print(f"Softmax Output {ls.shape} Original Output {y.shape}")
-    
-    
     loss_1 = criterion(y0, y)
     loss_2 = criterion(y1, y)
     loss_3 = criterion(y2, y)
