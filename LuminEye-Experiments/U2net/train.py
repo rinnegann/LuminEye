@@ -23,15 +23,39 @@ from tqdm.notebook import tqdm
 from torchsummary import summary
 import segmentation_models_pytorch as smp
 from custom_model import U2NET
+from focalLoss import FocalLoss
 import warnings
+
+# Withoout class weights
+
+
 warnings.filterwarnings("ignore")
 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Available devices:{device}")
 
-
 n_classes = 2
+def multi_focal_losss(y0, y1, y2,y3, y4, y5, y6,y):
+    
+    criterion = FocalLoss(gamma=0.7)
+
+
+    
+    # print(f"Softmax Output {ls.shape} Original Output {y.shape}")
+    
+    
+    loss_1 = criterion(y0, y)
+    loss_2 = criterion(y1, y)
+    loss_3 = criterion(y2, y)
+    loss_4 = criterion(y3, y)
+    loss_5 = criterion(y4, y)
+    loss_6 = criterion(y5, y)
+    loss_7 = criterion(y6, y)
+    
+    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+    
+    return loss_1,loss
 
 def multi_dice_loss_function(y0, y1, y2,y3, y4, y5, y6,y):
     loss_1 = DiceBceLoss(y, y0)
@@ -279,8 +303,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             y0,y1,y2,y3,y4,y5,y6 = model(image)
             # output = model(image)
             
-            loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            #Multi DiceBceLoss
+            # loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
             
+            #Multi Focal losss
+            loss_1,loss = multi_focal_losss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             #evaluation metrics
             iou_score += IoU(y0, mask)
