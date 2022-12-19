@@ -190,7 +190,12 @@ train_transform = A.Compose(
             A.RGBShift(r_shift_limit=25, g_shift_limit=25,
                        b_shift_limit=25, p=0.5),
             A.RandomBrightnessContrast(
-                brightness_limit=0.3, contrast_limit=0.3, p=0.5)
+                brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+            A.OneOf([
+            A.MotionBlur(p=0.2),
+            A.MedianBlur(blur_limit=3, p=0.1),
+            A.Blur(blur_limit=3, p=0.1),
+        ], p=0.2),
         ]
     )
         
@@ -441,7 +446,7 @@ config = {"epochs":epoch,
                    "max_learning_rate":max_lr,
                    "length_train":len(train_set),
                    "length_val": len(val_set),
-                   "Augmentations":["ShiftScaleRotate","RGBShift","RandomBrightnessContrast"],
+                   "Augmentations":["ShiftScaleRotate","RGBShift","RandomBrightnessContrast","Blur","MotionBLur","MedianBlur"],
                    "number_of_classes":n_classes,
                    "Resize_amt":(512,512),
                    "Base Model": "DeepLabV3Plus",
@@ -449,6 +454,7 @@ config = {"epochs":epoch,
                    "Dataset": "Short",
                    "OPtimizer":"Adam",
                    "lr_scheduler": "OneCycleLR",
+                   "Loss": "Tversky Loss"
                    "weight_decay":weight_decay}
 
 
