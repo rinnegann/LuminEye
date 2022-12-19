@@ -12,23 +12,20 @@ class TverskyLoss(nn.Module):
 
     def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=0.5):
         
-        #comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)       
-        
-        #flatten label and prediction tensors
-        
-        TP = 0
-        FP = 0
-        FN = 0
-         
-        targets = targets.view(-1)
-        
-        for index in range(self.num_classes):
-            TP += (inputs[:,index,:,:].view(-1)* targets).sum()
-            FP += ((1-targets)*inputs[:,index,:,:].view(-1)).sum()
-            FN += (targets * (1-inputs[:,index,:,:].view(-1))).sum()
+        true_1_hot = torch.eye(2)[targets.to("cpu").squeeze(1)]
+        true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+        probas = F.sigmoid(inputs)
+        true_1_hot = true_1_hot.type(inputs.type())
+        dims = (0,) + tuple(range(2, targets.ndimension()))
+            
         
         
-        Tversky = (TP + smooth) / (TP + alpha*FP + beta*FN + smooth)  
+        TP = torch.sum(probas * true_1_hot, dims)
+        FP = torch.sum((1-targets)*inputs,dim=dims)
+        FN = torch.sum(targets*(1-inputs),dim=dims)
         
-        return 1 - Tversky
+        Tversky = (TP + smooth) / (TP + alpha*FP + beta*FN + smooth)
+        
+        # print(f"Loss FUncation value is {1-Tversky}") 
+        
+        return 1 - Tversky.mean()
