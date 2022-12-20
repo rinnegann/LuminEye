@@ -23,7 +23,7 @@ from tqdm.notebook import tqdm
 from torchsummary import summary
 import segmentation_models_pytorch as smp
 from custom_model import U2NET
-from tversky_loss import TverskyLoss
+from tversky_loss import TverskyLoss,FocalTverskyLoss
 from focalLoss import FocalLoss
 from boundary_loss import DC_and_BD_loss
 import warnings
@@ -72,9 +72,22 @@ def multi_tversky_loss(y0, y1, y2,y3, y4, y5, y6,y):
     
     return loss_1,loss
 
+def multi_focaltversky_loss(y0, y1, y2,y3, y4, y5, y6,y):
+    
+    criterion = FocalTverskyLoss()
+    loss_1 = criterion(y0, y)
+    loss_2 = criterion(y1, y)
+    loss_3 = criterion(y2, y)
+    loss_4 = criterion(y3, y)
+    loss_5 = criterion(y4, y)
+    loss_6 = criterion(y5, y)
+    loss_7 = criterion(y6, y)
+    
+    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+    
+    return loss_1,loss
 
-
-def multi_focal_losss(y0, y1, y2,y3, y4, y5, y6,y):
+def multi_focal_loss(y0, y1, y2,y3, y4, y5, y6,y):
     
     criterion = FocalLoss(gamma=0.7)
     loss_1 = criterion(y0, y)
@@ -352,6 +365,10 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             # Multi Distance Binary Loss
             loss_1,loss = multi_distBinary_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
+            
+            # Multi Focal Tversky Loss
+            loss_1,loss  = multi_focaltversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
+            
             #evaluation metrics
             iou_score += IoU(y0, mask)
             accuracy += pixel_wise_accuracy(y0, mask)
@@ -394,7 +411,9 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                     
                     # loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
-                    loss_1,loss = multi_distBinary_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    #loss_1,loss = multi_distBinary_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    
+                    loss_1,loss = multi_focaltversky_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
                                                     
                     test_loss += loss.item()
