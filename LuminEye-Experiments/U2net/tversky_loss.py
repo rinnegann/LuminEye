@@ -10,22 +10,29 @@ class TverskyLoss(nn.Module):
         super(TverskyLoss, self).__init__()
         self.num_classes = num_classes
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=0.5):
-        
-        true_1_hot = torch.eye(2)[targets.to("cpu").squeeze(1)]
-        true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
-        probas = F.sigmoid(inputs)
-        true_1_hot = true_1_hot.type(inputs.type())
-        dims = (0,) + tuple(range(2, targets.ndimension()))
-            
-        
-        
-        TP = torch.sum(probas * true_1_hot, dims)
-        FP = torch.sum((1-targets)*inputs,dim=dims)
-        FN = torch.sum(targets*(1-inputs),dim=dims)
-        
-        Tversky = (TP + smooth) / (TP + alpha*FP + beta*FN + smooth)
-        
-        # print(f"Loss FUncation value is {1-Tversky}") 
-        
-        return 1 - Tversky.mean()
+    def forward(self, logits, true, smooth=1, alpha=0.5, beta=0.5,eps=1e-7):
+    
+        num_classes = logits.shape[1]
+        if num_classes == 1:
+            true_1_hot = torch.eye(self.num_classes + 1)[true.squeeze(1)]
+            true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+            true_1_hot_f = true_1_hot[:, 0:1, :, :]
+            true_1_hot_s = true_1_hot[:, 1:2, :, :]
+            true_1_hot = torch.cat([true_1_hot_s, true_1_hot_f], dim=1)
+            pos_prob = torch.sigmoid(logits)
+            neg_prob = 1 - pos_prob
+            probas = torch.cat([pos_prob, neg_prob], dim=1)
+        else:
+            true_1_hot = torch.eye(self.num_classes)[true.to("cpu").squeeze(1)]
+            true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+            probas = F.softmax(logits, dim=1)
+        true_1_hot = true_1_hot.type(logits.type())
+        dims = (0,) + tuple(range(2, true.ndimension()))
+        intersection = torch.sum(probas * true_1_hot, dims)
+        fps = torch.sum(probas * (1 - true_1_hot), dims)
+        fns = torch.sum((1 - probas) * true_1_hot, dims)
+        num = intersection
+        denom = intersection + (alpha * fps) + (beta * fns)
+        tversky_loss = (num / (denom + eps)).mean()
+        return (1 - tversky_loss)
+

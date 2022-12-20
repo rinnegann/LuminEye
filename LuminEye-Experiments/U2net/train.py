@@ -25,6 +25,7 @@ import segmentation_models_pytorch as smp
 from custom_model import U2NET
 from tversky_loss import TverskyLoss
 from focalLoss import FocalLoss
+from boundary_loss import DC_and_BD_loss
 import warnings
 
 
@@ -39,6 +40,22 @@ print(f"Available devices:{device}")
 n_classes = 2
 
 
+
+
+def multi_distBinary_loss(y0, y1, y2,y3, y4, y5, y6,y):
+    
+    criterion = DC_and_BD_loss({'batch_dice': True, 'smooth': 1e-5, 'do_bg': False, 'square': False},{})
+    loss_1 = criterion(y0, y)
+    loss_2 = criterion(y1, y)
+    loss_3 = criterion(y2, y)
+    loss_4 = criterion(y3, y)
+    loss_5 = criterion(y4, y)
+    loss_6 = criterion(y5, y)
+    loss_7 = criterion(y6, y)
+    
+    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+    
+    return loss_1,loss
 
 def multi_tversky_loss(y0, y1, y2,y3, y4, y5, y6,y):
     
@@ -329,8 +346,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             #Multi Focal losss
             # loss_1,loss = multi_focal_losss(y0, y1, y2, y3, y4, y5, y6, mask)
             
-            #Multi Tversky loss
-            loss_1,loss = multi_tversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
+            # #Multi Tversky loss
+            # loss_1,loss = multi_tversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
+            
+            # Multi Distance Binary Loss
+            loss_1,loss = multi_distBinary_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             #evaluation metrics
             iou_score += IoU(y0, mask)
@@ -374,7 +394,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                     
                     # loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
-                    loss_1,loss = multi_tversky_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    loss_1,loss = multi_distBinary_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
                                                     
                     test_loss += loss.item()
@@ -431,7 +451,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
 
 
 max_lr = 1e-3
-epoch = 10
+epoch = 50
 weight_decay = 1e-6
 
 experiment_name = "Short_Experiment"
@@ -454,7 +474,7 @@ config = {"epochs":epoch,
                    "Dataset": "Short",
                    "OPtimizer":"Adam",
                    "lr_scheduler": "OneCycleLR",
-                   "Loss": "Tversky Loss"
+                   "Loss": "Tversky Loss",
                    "weight_decay":weight_decay}
 
 
