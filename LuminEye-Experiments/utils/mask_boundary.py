@@ -3,9 +3,9 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_masks"
-save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//MICHE_BOUNDARIES/val"
+image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/val_img"
+mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/val_masks"
+save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/UBRIS_BOUNDARIES/train"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
@@ -56,7 +56,7 @@ def getting_boundary_from_mask(images,masks,save_location):
         # print(f"Mask Image {raw_image.shape}")
 
         final_image = np.concatenate((ori_image,vertical_bar*255,image,vertical_bar*255,raw_image),axis = 1)
-        cv2.imwrite(os.path.join(save_location,x.split("/")[-1]),final_image)
+        cv2.imwrite(os.path.join(save_location,x.split("/")[-1].split(".")[0]+".png"),final_image)
         
         # count +=1
         # if count ==1:
