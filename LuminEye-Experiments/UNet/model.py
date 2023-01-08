@@ -71,7 +71,7 @@ class UNET(nn.Module):
         self.d4 = Decoder_Block(128,64)
         
         # Classification
-        self.out  = nn.Conv2d(64,1,kernel_size=1,padding=0)
+        self.out  = nn.Conv2d(64,3,kernel_size=1,padding=0)
         
     def forward(self,inputs):
         
