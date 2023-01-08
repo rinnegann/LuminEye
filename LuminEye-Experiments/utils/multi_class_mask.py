@@ -3,15 +3,32 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//train_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//train_masks"
-save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//MICHE_MULTICLASS/train_masks"
+image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_img"
+mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_masks"
+save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//MICHE_MULTICLASS/val_masks"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
 
 # print(images)
 # print(masks)
+
+valid_classes = [0,85, 170]
+class_names = ["Background","Pupil","Iris"]
+
+
+class_map = dict(zip(valid_classes, range(len(valid_classes))))
+n_classes=len(valid_classes)
+
+
+colors = [ [  0,   0,   0],[0,255,0],[0,0,255]]
+label_colours = dict(zip(range(n_classes), colors))
+
+
+def encode_segmap(mask):
+    for _validc in valid_classes:
+        mask[mask == _validc] = class_map[_validc]
+    return mask
 
 
 def getting_boundary_from_mask(images,masks,save_location):
@@ -67,7 +84,7 @@ def getting_boundary_from_mask(images,masks,save_location):
         grayscale_mask = np.argmax(output_mask, axis=-1)
         grayscale_mask = (grayscale_mask / len(color_map)) * 255
         grayscale_mask = np.expand_dims(grayscale_mask, axis=-1)
-        
+        grayscale_mask = encode_segmap(grayscale_mask)
         
         
                         

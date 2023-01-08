@@ -17,6 +17,8 @@ from pytorch_lightning import seed_everything,LightningModule,Trainer
 import multiprocessing
 import torchmetrics
 from torchmetrics.classification import MulticlassJaccardIndex
+from dice_loss import DiceLoss
+
 import torch
 
 
@@ -72,6 +74,7 @@ val_transform=A.Compose(
 
 class Iris(Dataset):
     def __init__(self,x,y,transform=None):
+        super().__init__()
         self.images_dir = x
         self.masks_dir = y
         self.transform = transform
@@ -117,7 +120,7 @@ class OurModel(LightningModule):
         self.lr = 1e-3
         self.batch_size = 8
         self.numworker = multiprocessing.cpu_count()//4
-        self.criterion = smp.losses.DiceLoss(mode = "multiclass")
+        self.criterion= DiceLoss(mode='multiclass')
         self.metrics = MulticlassJaccardIndex(num_classes=n_classes)
         
         
@@ -125,30 +128,31 @@ class OurModel(LightningModule):
         self.val_cls = Iris(valid_x,valid_y,transform=val_transform)
         
     def process(self,image,segment):
-        out = self(image)
-        segment = encode_segmap(segment)
-        loss = self.criterion(out,segment.long())
-        iou = self.metrics(out,segment)
+        out=self.forward(image)
+        print(out)    
+        segment=encode_segmap(segment)
+        loss=self.criterion(out,segment.long())
+        iou=self.metrics(out,segment)
         return loss,iou
     
     def forward(self,x):
         return self.layer(x)
-    
+
+
     def configure_optimizers(self):
-        opt = torch.optim.AdamW(self.parameters(),lr=self.lr)
-        return opt
-    
+        return torch.optim.AdamW(self.parameters(), lr=self.lr)
+
     def train_dataloader(self):
-        return DataLoader(self.train_cls,batch_size=self
-                          .batch_size,shuffle=False,num_workers=self.numworker,
-                          pin_memory=True)
+        return DataLoader(self.train_cls, batch_size=self.batch_size, 
+                        shuffle=True,num_workers=self.numworker,pin_memory=True)
+
     def training_step(self,batch,batch_idx):
-        image,segment = batch
-        loss,iou = self.process(image,segment)
+        image,segment=batch
+        loss,iou=self.process(image,segment)
         self.log('train_loss', loss,on_step=False, on_epoch=True,prog_bar=True)
         self.log('train_iou', iou,on_step=False, on_epoch=True,prog_bar=False)
         return loss
-        
+
     def val_dataloader(self):
         return DataLoader(self.val_cls, batch_size=self.batch_size, 
                         shuffle=False,num_workers=self.numworker,pin_memory=True)
@@ -168,7 +172,7 @@ if __name__ == '__main__':
     
     trainer = Trainer(max_epochs=10, auto_lr_find=False, auto_scale_batch_size=False,
                   gpus=-1,precision=16,
-                  callbacks=[checkpoint_callback],
+                  callbacks=[checkpoint_callback],detect_anomaly=True
                  )
     
     trainer.fit(model)
