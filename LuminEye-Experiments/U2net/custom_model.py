@@ -425,7 +425,8 @@ class U2NET(nn.Module):
 
 if __name__ =="__main__":
     t1 = torch.zeros((2,3,512,512), device=torch.device('cuda'))
-    model  = U2NET(in_ch=3,out_ch=2)
+    model  = U2NET(in_ch=3,out_ch=3)
     model = model.to("cuda")
     d0,d1,d2,d3, d4, d5, d6 = model(t1)
+    print(d0.shape)
     

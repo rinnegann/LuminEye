@@ -16,11 +16,14 @@ import segmentation_models_pytorch as smp
 import time 
 import wandb
 import sys
+from custom_model import U2NET
 sys.path.insert(1,"../utils/")
 from losses import DiceLoss,IoU,pixel_wise_accuracy,get_lr
 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
+dice_loss = DiceLoss(mode="multiclass")
 
 train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_img/"
 train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_masks/"
@@ -30,7 +33,7 @@ val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULT
 
 val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_masks/" 
 n_classes = 3
-batch_size = 2
+batch_size = 1
 
 train_x = sorted(
         glob(f"{train_images}/*"))
@@ -40,6 +43,28 @@ valid_x = sorted(
         glob(f"{val_images}/*"))
 valid_y = sorted(
         glob(f"{val_masks }/*"))
+
+
+def multi_dice_loss_function(y0, y1, y2,y3, y4, y5, y6,y): # Final Argument== Mask
+    loss_1 = dice_loss(y0,y)
+            
+    loss_2 = dice_loss(y1,y)
+            
+    loss_3 = dice_loss(y2,y)
+             
+    loss_4 = dice_loss(y3,y)
+      
+    loss_5 = dice_loss(y4,y)
+      
+      
+    loss_6 = dice_loss(y5,y)
+      
+      
+    loss_7 = dice_loss(y6,y)
+      
+    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+    
+    return loss_1,loss
 
 
 class Iris(Dataset):
@@ -115,8 +140,6 @@ print(f' y = shape: {y.shape}; class : {y.unique()}; type: {y.dtype}')
 
 
 def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=False):
-    
-    dice_loss = DiceLoss(mode="multiclass")
     train_losses = []
     test_losses = []
     val_iou = []; val_acc = []
@@ -130,15 +153,14 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
     for e in range(epochs):
         since = time.time()
         running_loss = 0
+        running_target_loss = 0
         iou_score = 0
         accuracy = 0
         #training loop
         model.train()
         for i, data in enumerate(tqdm(train_loader)):
             #training phase
-            image_tiles,mask_tiles = data
-            # image_tiles= image_tiles.to(device)
-            # mask_tiles = mask_tiles.to(device)
+            image_tiles, mask_tiles = data
             if patch:
                 bs, n_tiles, c, h, w = image_tiles.size()
 
@@ -147,11 +169,17 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             
             image = image_tiles.to(device); mask = mask_tiles.to(device);
             #forward
-            output = model(image)
-            loss =dice_loss(output,mask)
+            
+            y0,y1,y2,y3,y4,y5,y6 = model(image)
+            
+            
+            #Multi DiceBceLoss
+            loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            
+            
             #evaluation metrics
-            iou_score += IoU(output, mask)
-            accuracy += pixel_wise_accuracy(output, mask)
+            iou_score += IoU(y0, mask)
+            accuracy += pixel_wise_accuracy(y0, mask)
             #backward
             loss.backward()
             optimizer.step() #update weight          
@@ -162,10 +190,12 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             scheduler.step() 
             
             running_loss += loss.item()
+            running_target_loss += loss_1.item()
             
         else:
             model.eval()
             test_loss = 0
+            test_target_loss = 0
             test_accuracy = 0
             val_iou_score = 0
             #validation loop
@@ -173,9 +203,6 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                 for i, data in enumerate(tqdm(val_loader)):
                     #reshape to 9 patches from single image, delete batch size
                     image_tiles, mask_tiles = data
-                    image_titles = image_tiles.to(device)
-                    mask_tiles = mask_tiles .to(device)
-                    
 
                     if patch:
                         bs, n_tiles, c, h, w = image_tiles.size()
@@ -183,14 +210,20 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                         image_tiles = image_tiles.view(-1,c, h, w)
                         mask_tiles = mask_tiles.view(-1, h, w)
                     
-                    image = image_tiles.to(device); mask = mask_tiles.to(device);
-                    output = model(image)
+                    image = image_tiles.to(device); mask = mask_tiles.to(device);                
+                    y0_l,y1_l,y2_l,y3_l,y4_l,y5_l,y6_l = model(image)
                     #evaluation metrics
-                    val_iou_score +=  IoU(output, mask)
-                    test_accuracy += pixel_wise_accuracy(output, mask)
+                    val_iou_score +=  IoU(y0_l, mask)
+                    test_accuracy += pixel_wise_accuracy(y0_l, mask)
                     #loss
-                    loss = dice_loss(output,mask)                                  
+                    
+                    loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    
+                    
+                    
+                                                    
                     test_loss += loss.item()
+                    test_target_loss += loss_1.item()
             
             #calculatio mean for each batch
             train_losses.append(running_loss/len(train_loader))
@@ -201,55 +234,52 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                 print('Loss Decreasing.. {:.3f} >> {:.3f} '.format(min_loss, (test_loss/len(val_loader))))
                 min_loss = (test_loss/len(val_loader))
                 decrease += 1
-                print('saving model...')
-                torch.save(model, 'model-{:.3f}.pt'.format(val_iou_score/len(val_loader)))
+                if decrease % 5 == 0:
+                    print('saving model...')
+                    model_name = "{}_model_{}val_iou{:.3f}.pt".format("Miche",get_current_date_time(),val_iou_score/len(val_loader))
+                    
+                    torch.save(model,model_name)
                     
 
-            
-            #iou
+           
             val_iou.append(val_iou_score/len(val_loader))
             train_iou.append(iou_score/len(train_loader))
             train_acc.append(accuracy/len(train_loader))
             val_acc.append(test_accuracy/ len(val_loader))
             print("Epoch:{}/{}..".format(e+1, epochs),
                   "Train Loss: {:.3f}..".format(running_loss/len(train_loader)),
+                  "Train Target Loss: {:.3f}..".format(running_target_loss/len(train_loader)),
                   "Val Loss: {:.3f}..".format(test_loss/len(val_loader)),
+                  "Val Target Loss: {:.3f}..".format(test_target_loss/len(val_loader)),
                   "Train IoU:{:.3f}..".format(iou_score/len(train_loader)),
                   "Val IoU: {:.3f}..".format(val_iou_score/len(val_loader)),
-                  "Train Acc:{:.3f}..".format(accuracy/len(train_loader)),
-                  "Val Acc:{:.3f}..".format(test_accuracy/len(val_loader)),
                   "Time: {:.2f}m".format((time.time()-since)/60))
             
-            train_metrics = {"train/epoch":e+1,"train/train_loss":running_loss/len(train_loader),"train/iou":iou_score/len(train_loader),"train/accuracy":accuracy/len(train_loader)}
+            train_metrics = {"train/epoch":e+1,"train/train_loss":running_loss/len(train_loader),
+                             "train/train_target_loss":running_target_loss/len(train_loader),
+                             "train/iou":iou_score/len(train_loader),
+                             "train/accuracy":accuracy/len(train_loader)}
     
-            val_metrics = {"train/epoch":e+1,"val/val_loss":test_loss/len(val_loader),"val/iou":val_iou_score/len(val_loader),"val/accuracy":test_accuracy/len(val_loader)}
+            val_metrics = {"val/epoch":e+1,
+                           "val/var_target_loss":test_target_loss/len(val_loader),
+                           "val/val_loss":test_loss/len(val_loader),
+                           "val/iou":val_iou_score/len(val_loader),
+                           "val/accuracy":test_accuracy/len(val_loader)}
 
             
             wandb.log({**train_metrics, **val_metrics})
-            
     
-    
-    wandb.finish()    
-    
-    history = {'train_loss' : train_losses, 'val_loss': test_losses,
-               'train_miou' :train_iou, 'val_miou':val_iou,
-               'train_acc' :train_acc, 'val_acc':val_acc,
-               'lrs': lrs}
-    
-    
-    
-    
+    wandb.log({**train_metrics, **val_metrics})
+    wandb.finish()
     print('Total time: {:.2f} m' .format((time.time()- fit_time)/60))
-    return history
-
-
+    
+    
 if __name__ == "__main__":
     max_lr = 1e-3
     epoch = 50
     weight_decay = 1e-6
     
-    model = smp.DeepLabV3Plus('efficientnet-b3',encoder_weights='imagenet', classes = n_classes, encoder_output_stride =16, activation=None,
-                 encoder_depth= 5)
+    model = U2NET(in_ch=3,out_ch=n_classes)
     model=model.to(device)
     experiment_name = "Short_Experiment"
 
@@ -266,8 +296,8 @@ if __name__ == "__main__":
                     "Augmentations":["ShiftScaleRotate","RGBShift","RandomBrightnessContrast","MotionBLur"],
                     "number_of_classes":n_classes,
                     "Resize_amt":(512,512),
-                    "Base Model": "DeepLabV3Plus",
-                    "BackBone":"EfficientNet-B3",
+                    "Base Model": "U2NET",
+                    "BackBone":"",
                     "Dataset": "Short",
                     "OPtimizer":"Adam",
                     "lr_scheduler": "OneCycleLR",
