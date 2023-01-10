@@ -21,7 +21,7 @@ device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
-model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/DeepLabV3Plus/Miche_Multiclass_Segemntation_DeepLabv3Plus_epoch_200_batch_4/Miche-0.907.pt")
+model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2/Miche_model_2023_01_09_23:22:49_val_iou0.907.pt")
 
 val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_img"
 
@@ -123,7 +123,8 @@ def predict_image_mask(model,image,mask):
         image = image.unsqueeze(0)
         mask = mask.unsqueeze(0)
         
-        model_output= model(image)
+        model_output,_,_,_,_,_,_ = model(image)
+        
         
         output = softmax(model_output)
         score = IoU(model_output, mask)
@@ -199,6 +200,6 @@ def main(saved_location):
         
     return total_iou
 if __name__ == "__main__":
-    experiment_name = "Predictions/Miche_Multiclass_Segemntation_DeepLabv3Plus_epoch_200_batch_4"
+    experiment_name = "Predictions/u2net_multiclass_epoch_200_batch_2"
     iou = main(experiment_name)
     print(f"Iou Value is {iou/len(val_batch)}")
