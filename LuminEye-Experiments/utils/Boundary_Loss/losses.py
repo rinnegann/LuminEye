@@ -80,7 +80,9 @@ class SurfaceLoss():
     def __call__(self, probs: Tensor, dist_maps: Tensor) -> Tensor:
         assert simplex(probs)
         assert not one_hot(dist_maps)
-
+        
+        
+        
         pc = probs[:, self.idc, ...].type(torch.float32)
         dc = dist_maps[:, self.idc, ...].type(torch.float32)
 

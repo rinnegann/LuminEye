@@ -6,10 +6,10 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2_with_dice_and_boundary_loss/img"
-pred_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2_with_dice_and_boundary_loss/pred"
-gt_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2_with_dice_and_boundary_loss/mask"
-save_location = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2_with_dice_and_boundary_loss/pred_gt_boundaries"
+image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/img"
+pred_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/pred"
+gt_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/mask"
+save_location = "//home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/pred_gt_boundaries"
 
 images = sorted(glob(f"{image_path}/*"))
 pred = sorted(glob(f"{pred_path}/*"))
