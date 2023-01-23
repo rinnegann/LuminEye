@@ -22,15 +22,72 @@ from losses import DiceLoss,IoU,pixel_wise_accuracy,get_lr
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_img/"
-train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_masks/"
-
-
-val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_img"
-
-val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_masks/" 
 n_classes = 3
 batch_size = 2
+
+colors = [ [  0,   0,   0],[0,255,0],[0,0,255]]
+label_colours = dict(zip(range(n_classes), colors))
+
+valid_classes = [0,85, 170]
+class_names = ["Background","Pupil","Iris"]
+
+
+class_map = dict(zip(valid_classes, range(len(valid_classes))))
+n_classes=len(valid_classes)
+
+
+def decode_segmap(temp):
+    #convert gray scale to color
+    
+    # print(temp.size())
+    temp=temp.numpy()
+    
+    # temp = temp[:,:,0]
+    # print(temp.shape())
+    r = temp.copy()
+    g = temp.copy()
+    b = temp.copy()
+    for l in range(0, n_classes):
+        r[temp == l] = label_colours[l][0]
+        g[temp == l] = label_colours[l][1]
+        b[temp == l] = label_colours[l][2]
+    
+    rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
+    rgb[:, :, 0] = r / 255.0
+    rgb[:, :, 1] = g / 255.0
+    rgb[:, :, 2] = b / 255.0
+    return rgb
+
+
+
+class UnNormalize(object):
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+        Returns:
+            Tensor: Normalized image.
+        """
+        for t, m, s in zip(tensor, self.mean, self.std):
+            t.mul_(s).add_(m)
+            # The normalize code -> t.sub_(m).div_(s)
+        return tensor
+
+segmentation_classes = ["Background","Pupil","Iris"]
+
+
+train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Shorter_Dataset/train_img/"
+train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Shorter_Dataset/train_masks/"
+
+
+val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Shorter_Dataset/val_img"
+
+val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Shorter_Dataset/val_masks/" 
+
 
 train_x = sorted(
         glob(f"{train_images}/*"))
@@ -40,6 +97,72 @@ valid_x = sorted(
         glob(f"{val_images}/*"))
 valid_y = sorted(
         glob(f"{val_masks }/*"))
+
+
+def labels():
+    l = {}
+    for i, label in enumerate(segmentation_classes):
+        l[i] = label
+    return l
+
+
+def wandb_mask(bg_img, pred_mask, true_mask):
+    
+    return wandb.Image(bg_img,masks={"prediction" : {
+          "mask_data" : pred_mask, 
+          "class_labels" : labels()
+      },"ground truth" : {
+          "mask_data" : true_mask, 
+          "class_labels" : labels()
+      }})
+    
+    
+def prediction_on_val(model,images,predictions,masks):
+    
+    mask_list = []
+    
+    count = 0 
+    
+    softmax= nn.Softmax(dim=1)
+    unorm = UnNormalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    for x,y,z in zip(images,predictions,masks):
+        
+        for i in range(batch_size):
+            
+        
+            # print(f"Image shape {x[i].size()}")
+            
+            # print(f"Masks shape {z[i].size()}")
+            # print(f"Output shape {z[i].size()}")
+        
+            img = unorm(x[i]).permute(1,2,0).cpu().numpy()
+        
+            mask = z[i].cpu().numpy()
+            
+            pred = softmax(y[i]) # [3, 512, 512]
+            
+            # print(f"Prediction shape after Softmax: {pred.size()}")
+            pred = torch.argmax(pred,dim=0).cpu().numpy()
+            
+    
+            
+            print(f"Image shape {img.shape}")
+            print(f"Masks shape {mask.shape}")
+            print(f"Output shape {pred.shape}")
+
+        
+        
+            mask_list.append(wandb_mask(img,pred,mask))
+        
+    #     # if count ==15:
+    #     #     break
+        
+     
+        
+        
+    return mask_list
+
+
 
 
 class Iris(Dataset):
@@ -168,6 +291,9 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             test_loss = 0
             test_accuracy = 0
             val_iou_score = 0
+            wb_images = []
+            wb_prediction =[]
+            wb_masks = []
             #validation loop
             with torch.no_grad():
                 for i, data in enumerate(tqdm(val_loader)):
@@ -184,7 +310,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                         mask_tiles = mask_tiles.view(-1, h, w)
                     
                     image = image_tiles.to(device); mask = mask_tiles.to(device);
+                    
+                    wb_images.append(image)
+                    wb_masks.append(mask)
                     output = model(image)
+                    wb_prediction.append(output)
                     #evaluation metrics
                     val_iou_score +=  IoU(output, mask)
                     test_accuracy += pixel_wise_accuracy(output, mask)
@@ -193,6 +323,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                     test_loss += loss.item()
             
             #calculatio mean for each batch
+            mask_list = prediction_on_val(model, wb_images, wb_prediction, wb_masks)
             train_losses.append(running_loss/len(train_loader))
             test_losses.append(test_loss/len(val_loader))
 
@@ -224,7 +355,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
     
             val_metrics = {"train/epoch":e+1,"val/val_loss":test_loss/len(val_loader),"val/iou":val_iou_score/len(val_loader),"val/accuracy":test_accuracy/len(val_loader)}
 
-            
+            wandb.log({"predictions" : mask_list})
             wandb.log({**train_metrics, **val_metrics})
             
     
@@ -245,7 +376,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
 
 if __name__ == "__main__":
     max_lr = 1e-3
-    epoch = 50
+    epoch = 10
     weight_decay = 1e-6
     
     model = smp.DeepLabV3Plus('efficientnet-b3',encoder_weights='imagenet', classes = n_classes, encoder_output_stride =16, activation=None,

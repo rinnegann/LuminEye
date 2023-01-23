@@ -3,9 +3,9 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//val_masks"
-save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche//MICHE_MULTICLASS/val_masks"
+image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_image"
+mask_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_masks"
+save_location = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_multi_classes"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
@@ -47,9 +47,9 @@ def getting_boundary_from_mask(images,masks,save_location):
         
         raw_image = cv2.imread(y)
         raw_image = cv2.cvtColor(raw_image,cv2.COLOR_BGR2RGB)
-        image = cv2.resize(image,(400,400))
+        
         ori_image = image.copy()
-        raw_image = cv2.resize(raw_image,(400,400))
+        
         
         
         gray = cv2.cvtColor(raw_image,cv2.COLOR_BGR2GRAY)

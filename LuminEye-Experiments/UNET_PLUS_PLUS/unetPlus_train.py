@@ -26,6 +26,8 @@ import wandb
 
 device = torch.device( "cuda" if torch.cuda.is_available() else "cpu" )
 
+segmentation_classes = ["Background","Iris"]
+
 
 n_classes = 2
 def dense_target(tar:np.ndarray):
@@ -81,13 +83,13 @@ mean = [0.485 ,0.456 ,0.406]
 std = [0.229 , 0.224 , 0.225]
 
 
-train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/UBRIS_AUG_DATA/train/"
-train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/UBRIS_AUG_DATA/mask/"
+train_images = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/train_img"
+train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/train_masks"
 
 
-val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/UBRIS_AUG_DATA/val"
+val_images = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/val_img"
 
-val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/UBRIS_AUG_DATA/val_mask/" 
+val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/val_masks" 
 
 
 train_x = sorted(
@@ -102,7 +104,7 @@ valid_y = sorted(
 train_set = IRIS(train_x,train_y,mean, std)
 val_set = IRIS(valid_x ,valid_y,mean , std)
 
-batch_size = 2
+batch_size = 1
 train_loader= DataLoader(train_set , batch_size= batch_size , shuffle =True)
 val_loader = DataLoader(val_set , batch_size = batch_size , shuffle =True)
 
@@ -113,7 +115,7 @@ print(f' x = min : {x.min()} ; max : {x.max()}')
 print(f' y = shape: {y.shape}; class : {y.unique()}; type: {y.dtype}')
 
 
-model = smp.UnetPlusPlus("resnet50",encoder_weights="imagenet",classes=2,activation=None,encoder_depth=5,
+model = smp.UnetPlusPlus("resnet50",encoder_weights="imagenet",classes=3,activation=None,encoder_depth=5,
                          decoder_channels = [256,128,64,32,16])
 
 model  = model.to(device)
@@ -121,6 +123,26 @@ model  = model.to(device)
 
 
 print(summary(model,input_size= (3,512, 512)))
+
+
+
+def labels():
+    l = {}
+    for i, label in enumerate(segmentation_classes):
+        l[i] = label
+    return l
+
+
+def wandb_mask(bg_img, pred_mask, true_mask):
+    
+    return wandb.Image(bg_img,masks={"prediction" : {
+          "mask_data" : pred_mask, 
+          "class_labels" : labels()
+      },"ground truth" : {
+          "mask_data" : true_mask, 
+          "class_labels" : labels()
+      }})
+
 
 def pixel_wise_accuracy(output , mask):
   with torch.no_grad():
@@ -179,16 +201,6 @@ def jaccard_loss(true, logits, eps=1e-7):
 
 def DiceBceLoss(true, logits, eps=1e-7):
     
-    # z = torch.eye(2)[true.to("cpu").squeeze(1)]
-    
-    # print(f"Identity Matrix: {z.size()}")
-    
-    print(f"True  Value: {true.size()}")
-    
-    print(f"True  Squeeze Value: {true.squeeze(1).size()}")
-    
-    print(f"Predicted Value: {logits.size()}")
-    
     num_classes = logits.shape[1]
     
     # print(f"No of classes: {num_classes.to(device)}")
@@ -213,6 +225,36 @@ def DiceBceLoss(true, logits, eps=1e-7):
     bce = F.cross_entropy(logits, true , reduction ="mean")
     dice_bce = bce + dice_loss
     return dice_bce
+
+
+def prediction_on_val(model,images,predictions,masks):
+    
+    mask_list = []
+    
+    count = 0 
+    for x,y,z in zip(images,predictions,masks):
+        img = x.squeeze(0).permute(1,2,0).cpu().numpy()
+        mask = z.squeeze(0).cpu().numpy()
+        pred = torch.argmax(y,dim=1)
+        
+        pred = pred.squeeze(0).cpu().numpy()
+        
+        
+        # print(f"Image shape {img.shape}")
+        # print(f"Masks shape {mask.shape}")
+        # print(f"Output shape {pred.shape}")
+        
+        mask_list.append(wandb_mask(img,pred,mask))
+        
+        if count ==15:
+            break
+        
+     
+        
+        
+    return mask_list
+    
+        
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
@@ -274,6 +316,10 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             test_loss = 0
             test_accuracy = 0
             val_iou_score = 0
+            
+            wb_images = []
+            wb_masks = []
+            wb_prediction =[]
             #validation loop
             with torch.no_grad():
                 for i, data in enumerate(tqdm(val_loader)):
@@ -286,18 +332,32 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                     if patch:
                         bs, n_tiles, c, h, w = image_tiles.size()
 
+
                         image_tiles = image_tiles.view(-1,c, h, w)
                         mask_tiles = mask_tiles.view(-1, h, w)
                     
                     image = image_tiles.to(device); mask = mask_tiles.to(device);
+                    
+                    wb_images.append(image)
+                    wb_masks.append(mask)
+                    
+                    
+                    # print(f"Image shape {image.size()}")
+                    # print(f"Masks shape {mask.size()}")
+                    
                     output = model(image)
+                    
+                    # print(f"Output shape {output.size()}")
+                    
+                    wb_prediction.append(output)
+                    
                     #evaluation metrics
                     val_iou_score +=  IoU(output, mask)
                     test_accuracy += pixel_wise_accuracy(output, mask)
                     #loss
                     loss = jaccard_loss(mask, output)                                  
-                    test_loss += loss.item()
-            
+                    test_loss += loss.item() 
+            mask_list = prediction_on_val(model, wb_images, wb_prediction, wb_masks)
             #calculatio mean for each batch
             train_losses.append(running_loss/len(train_loader))
             test_losses.append(test_loss/len(val_loader))
@@ -331,7 +391,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             val_metrics = {"train/epoch":e+1,"val/val_loss":test_loss/len(val_loader),"val/iou":val_iou_score/len(val_loader),"val/accuracy":test_accuracy/len(val_loader)}
 
             
+            
+            wandb.log({"predictions" : mask_list})
             wandb.log({**train_metrics, **val_metrics})
+            
+            
             
     
     
@@ -351,9 +415,9 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
 if __name__ == '__main__':
     
 
-    experiment_name =  "Unet_plus_plus_with_resnet50_backbone_experiment_epoch_50"
+    experiment_name =  "short_exeperiment"
     max_lr = 1e-3
-    epoch = 50
+    epoch = 10
     weight_decay = 1e-6
 
     optimizer = torch.optim.Adam(model.parameters(), lr=max_lr, weight_decay=weight_decay)

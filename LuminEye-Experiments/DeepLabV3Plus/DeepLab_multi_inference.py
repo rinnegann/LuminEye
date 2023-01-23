@@ -21,11 +21,11 @@ device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
-model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/DeepLabV3Plus/Miche_Multiclass_Segemntation_DeepLabv3Plus_epoch_200_batch_4/Miche-0.907.pt")
+model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/DeepLabV3Plus/DeepLabv3_efficiennet_backbone_multiclass_boundary_awaweloss_epoch_200_batch_4/model-0.902.pt")
 
-val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_img"
+val_images = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_image"
 
-val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_masks/" 
+val_masks =  "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/multi_classes" 
 n_classes = 3
 batch_size = 1
 
@@ -42,7 +42,12 @@ n_classes=len(valid_classes)
 
 def decode_segmap(temp):
     #convert gray scale to color
+    
+    # print(temp.size())
     temp=temp.numpy()
+    
+    # temp = temp[:,:,0]
+    # print(temp.shape())
     r = temp.copy()
     g = temp.copy()
     b = temp.copy()
@@ -50,7 +55,9 @@ def decode_segmap(temp):
         r[temp == l] = label_colours[l][0]
         g[temp == l] = label_colours[l][1]
         b[temp == l] = label_colours[l][2]
-
+    print(r.shape)
+    print(g.shape)
+    print(b.shape)
     rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
     rgb[:, :, 0] = r / 255.0
     rgb[:, :, 1] = g / 255.0
@@ -166,7 +173,7 @@ val_batch = get_images(valid_x,valid_y,val_transform,batch_size=batch_size)
 val_cls  = Iris(valid_x,valid_y,transform =val_transform)
 
 
-def main(saved_location):
+def main(saved_location,seperate=False):
     if not os.path.exists(saved_location):
         os.makedirs(saved_location)
     unorm = UnNormalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
@@ -178,27 +185,44 @@ def main(saved_location):
         
         pred_mask = decode_segmap(pred_mask) * 255.0
         
+        
+        
         gt_mask = decode_segmap(mask) * 255.0
         
         img = unorm(image).permute(1,2,0).numpy() * 255.0
         
-        line = np.ones((512, 10, 3)) * 128
-        
-        
-        cv2.putText(gt_mask,"GT",(10,10),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2,cv2.LINE_AA)
-        
-        
-        
-        cat_images = np.concatenate(
-            [img[:,:,::-1], line,pred_mask, line,gt_mask], axis=1
-        )
-        
-        cv2.imwrite(os.path.join(saved_location,f"{i}.png"),cat_images)
+        if seperate:
+            if not os.path.exists(os.path.join(saved_location,"img")):
+                os.makedirs(os.path.join(saved_location,"img"))
+                
+            if not os.path.exists(os.path.join(saved_location,"pred")):
+                os.makedirs(os.path.join(saved_location,"pred"))
+                
+            if not os.path.exists(os.path.join(saved_location,"mask")):
+                os.makedirs(os.path.join(saved_location,"mask"))
+                
+            cv2.imwrite(os.path.join(saved_location,"img",f"{i}.png"),img[:,:,::-1])
+            cv2.imwrite(os.path.join(saved_location,"pred",f"{i}.png"),pred_mask)
+            cv2.imwrite(os.path.join(saved_location,"mask",f"{i}.png"),gt_mask)
+        else:
+            
+            line = np.ones((512, 10, 3)) * 128
+            
+            
+            cv2.putText(gt_mask,"GT",(10,10),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2,cv2.LINE_AA)
+            
+            
+            
+            cat_images = np.concatenate(
+                [img[:,:,::-1], line,pred_mask, line,gt_mask], axis=1
+            )
+            
+            cv2.imwrite(os.path.join(saved_location,f"{i}.png"),cat_images)
         
         total_iou += iou_score
         
-    return total_iou
+    # return total_iou
 if __name__ == "__main__":
-    experiment_name = "Predictions/Miche_Multiclass_Segemntation_DeepLabv3Plus_epoch_200_batch_4"
-    iou = main(experiment_name)
-    print(f"Iou Value is {iou/len(val_batch)}")
+    experiment_name = "MyTestingExperiment"
+    main(experiment_name,seperate=True)
+    # print(f"Iou Value is {iou/len(val_batch)}")

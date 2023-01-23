@@ -6,8 +6,8 @@ from glob import glob
 
 
 
-image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Aspect_Ratio/train_image"
-mask_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Aspect_Ratio/train_masks"
+image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Aspect_Ratio/val_image"
+mask_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Aspect_Ratio/val_masks"
 
 saved_location =  "./Images_with_Padded"
 
@@ -34,6 +34,11 @@ def padded_resize(image_name,source,splt):
     height,width = img.shape[:2]
     
     
+    top =0
+    bottom =0
+    
+    padded_img = None
+    
     if height > desire_height:
         print("Image height is greater than desired height")
         padded_img = img[0:512,0:width]
@@ -42,8 +47,7 @@ def padded_resize(image_name,source,splt):
         
     
         height_diff = desire_height - height
-        top =0
-        bottom =0
+        
         
         if height_diff%2 !=0:
             
@@ -55,7 +59,7 @@ def padded_resize(image_name,source,splt):
             bottom= height_diff//2
             
         
-        padded_img= cv2.copyMakeBorder(img,top,bottom,0,0,cv2.BORDER_CONSTANT,value=color)
+        # padded_img= cv2.copyMakeBorder(img,top,bottom,0,0,cv2.BORDER_CONSTANT,value=color)
     
     if source =="image":
         
@@ -63,10 +67,17 @@ def padded_resize(image_name,source,splt):
         if not os.path.exists(os.path.join(saved_location,f"{splt}_{source}")):
             os.makedirs(os.path.join(saved_location,f"{splt}_{source}"))
             
+        if not padded_img:
+            padded_img= cv2.copyMakeBorder(img,top,bottom,0,0,cv2.BORDER_CONSTANT,value=color)
+            
     else:
         # print(os.path.join(saved_location,f"{splt}_{source}"))
         if not os.path.exists(os.path.join(saved_location,f"{splt}_{source}")):
             os.makedirs(os.path.join(saved_location,f"{splt}_{source}"))
+            
+        if not padded_img:
+            
+            padded_img= cv2.copyMakeBorder(img,top,bottom,0,0,cv2.BORDER_REPLICATE)
             
             
     cv2.imwrite(os.path.join(saved_location,f"{splt}_{source}",img_name),padded_img)
