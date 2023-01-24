@@ -3,9 +3,9 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_image"
-mask_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_masks"
-save_location = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_multi_classes"
+image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/train_image"
+mask_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/train_masks"
+save_location = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/train_multi_classes"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
@@ -41,8 +41,10 @@ def getting_boundary_from_mask(images,masks,save_location):
     
     for x,y in zip(images,masks):
         
-        print(x)
+        print(x.split("/"))
         print(y)
+        
+        image_name = x.split("/")[-1].split(".")[0]
         image = cv2.imread(x)
         
         raw_image = cv2.imread(y)
@@ -55,25 +57,49 @@ def getting_boundary_from_mask(images,masks,save_location):
         gray = cv2.cvtColor(raw_image,cv2.COLOR_BGR2GRAY)
         median = cv2.medianBlur(gray, 5)
         
+        edge_detected_image = cv2.Canny(median, 0, 200)
+        
         bg_mask = np.zeros_like(raw_image)
 
 
-        contours, hierarchy = cv2.findContours(median, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+        contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        
         contour_list = []
-        max_contour = 0
+        max_area = {}
         for contour in contours:
-            # approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
+            
+            approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
             area = cv2.contourArea(contour)
+            # print(area)
+            if ((len(approx) > 8) & (len(approx) < 23) & (area > 30) ):
+                
+                
+                max_area[area] = contour
+                
+        
+        x = sorted(max_area,key = lambda x:x)
+        print(x)
+        max_contour = max_area[x[-1]]
+        min_contour = max_area[x[1]]
+
+        cv2.drawContours(bg_mask,[max_contour],0,(0,0,255),-1)
+
+        cv2.drawContours(bg_mask,[min_contour],0,(0,255,0),-1)
+    
+        # contour_list = []
+        # max_contour = 0
+        # for contour in contours:
+        #     # approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
+        #     area = cv2.contourArea(contour)
             
             
-            if area > max_contour:
-                cv2.drawContours(bg_mask,[contour],0,(0,0,255),-1)
-            else:
-                cv2.drawContours(bg_mask,[contour],0,(0,255,0),-1)
+        #     if area > max_contour:
+        #         cv2.drawContours(bg_mask,[contour],0,(0,0,255),-1)
+        #     else:
+        #         cv2.drawContours(bg_mask,[contour],0,(0,255,0),-1)
             
     
-            max_contour = area
+        #     max_contour = area
                 
         output_mask = []
         for i,color in enumerate(color_map):
@@ -88,7 +114,7 @@ def getting_boundary_from_mask(images,masks,save_location):
         
         
                         
-        cv2.imwrite(os.path.join(save_location,x.split("/")[-1].split(".")[0]+".png"),grayscale_mask)
+        cv2.imwrite(os.path.join(save_location,image_name+".png"),grayscale_mask)
         
         
 
