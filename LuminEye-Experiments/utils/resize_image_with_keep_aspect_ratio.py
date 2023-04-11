@@ -1,3 +1,8 @@
+"""Resize only one dimension while keeping the other dimension equal to the aspect ratio
+   (Here Width will be resized and height changes according to the aspect ratio)
+"""
+
+
 import os 
 import cv2
 import numpy as np
@@ -8,8 +13,8 @@ from PIL import Image
 
 
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/val_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/val_masks"
+image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_img"
+mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_masks"
 
 saved_location =  "./Images_with_Aspect_Ratio"
 
@@ -19,18 +24,18 @@ if not os.path.exists(saved_location):
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
 
-image_resize = 512 
+image_resize = 128
 
 
-def resize_aspect_ratio(image_name,Resize_width,source,splt):
+def resize_aspect_ratio(image_name,resize_width,source,splt):
     img = Image.open(image_name)
     
-    img_name = image_name.split("/")[-1]
+    img_name = image_name.split("/")[-1]  # 300 # 400
     print(f"Image Name:{img_name}")
-    wpercent = (Resize_width/float(img.size[0]))
-    hsize = int((float(img.size[1])*float(wpercent)))
+    wpercent = (resize_width/float(img.size[0]))  # 512/300 --> 1.70
+    hsize = int((float(img.size[1])*float(wpercent))) # 680
     
-    img = img.resize((Resize_width,hsize), PIL.Image.ANTIALIAS)
+    img = img.resize((resize_width,hsize), PIL.Image.ANTIALIAS)
     
     if source =="image":
         
@@ -54,8 +59,8 @@ def main():
     
         
         
-        img = resize_aspect_ratio(x, 512,"image","val")
-        mask = resize_aspect_ratio(y,512,"masks","val")
+        img = resize_aspect_ratio(x, image_resize,"image","train")
+        mask = resize_aspect_ratio(y,image_resize,"masks","train")
         
         # if count == 0:
         #     break

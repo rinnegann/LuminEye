@@ -9,7 +9,7 @@ import numpy as np
 image_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/img"
 pred_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/pred"
 gt_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/mask"
-save_location = "//home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/pred_gt_boundaries"
+save_location = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Boundary_Loss/Binary_Segemnetation_with_SDF_BY_only_focussing_iris_region_batch_4_epoch_200_boundary_loss/experiment_no_1/pred_gt_boundaries"
 
 images = sorted(glob(f"{image_path}/*"))
 pred = sorted(glob(f"{pred_path}/*"))
