@@ -29,6 +29,8 @@ val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULT
 n_classes = 3
 batch_size = 1
 
+img_resize = 256
+
 colors = [ [  0,   0,   0],[0,255,0],[0,0,255]]
 label_colours = dict(zip(range(n_classes), colors))
 
@@ -157,7 +159,7 @@ def get_images(test_x,test_y,val_transform,batch_size=1,shuffle=True,pin_memory=
     return test_batch
 
 val_transform = A.Compose([
-    A.Resize(512,512),
+    A.Resize(img_resize,img_resize),
     A.augmentations.transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
     ToTensorV2()
 ])
@@ -183,7 +185,7 @@ def main(saved_location):
         
         img = unorm(image).permute(1,2,0).numpy() * 255.0
         
-        line = np.ones((512, 10, 3)) * 128
+        line = np.ones((img_resize, 10, 3)) * 128
         
         
         cv2.putText(gt_mask,"GT",(10,10),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2,cv2.LINE_AA)
@@ -200,6 +202,6 @@ def main(saved_location):
         
     return total_iou
 if __name__ == "__main__":
-    experiment_name = "Predictions/u2net_multiclass_epoch_200_batch_2"
+    experiment_name = "Predictions/u2net_standard_model_preidction_on_256"
     iou = main(experiment_name)
     print(f"Iou Value is {iou/len(val_batch)}")
