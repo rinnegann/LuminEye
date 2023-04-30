@@ -16,7 +16,14 @@ import segmentation_models_pytorch as smp
 import time 
 import wandb
 import sys
+
+## Bigger Model
 from custom_model import U2NET
+
+
+# Less Parameter Model with Gan INPUT
+from u2net_lightgan import U2NETHDR
+
 sys.path.insert(1,"../utils/")
 from losses import DiceLoss,IoU,pixel_wise_accuracy,get_lr
 
@@ -94,7 +101,7 @@ def get_images(train_x,train_y,test_x,test_y,train_transform,val_transform,batch
 
 
 train_transform = A.Compose([
-    A.Resize(512,512),
+    A.Resize(64,64),
     A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2,
                                rotate_limit=30, p=0.5),
     A.RGBShift(r_shift_limit=25, g_shift_limit=25,
@@ -107,7 +114,7 @@ train_transform = A.Compose([
 ])
 
 val_transform = A.Compose([
-    A.Resize(512,512),
+    A.Resize(64,64),
     A.augmentations.transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
     ToTensorV2()
 ])
@@ -276,11 +283,16 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
     
 if __name__ == "__main__":
     max_lr = 1e-3
-    epoch = 50
+    epoch = 150
     weight_decay = 1e-6
     
-    model = U2NET(in_ch=3,out_ch=n_classes)
-    model=model.to(device)
+    # model = U2NET(in_ch=3,out_ch=n_classes)
+    # model=model.to(device)
+    
+    model = U2NETHDR(in_ch=3,out_ch=n_classes)
+    
+    model = model.to(device)
+    
     experiment_name = "Short_Experiment"
 
     optimizer = torch.optim.Adam(model.parameters(), lr=max_lr, weight_decay=weight_decay)
