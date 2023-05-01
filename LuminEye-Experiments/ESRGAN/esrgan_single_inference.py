@@ -26,10 +26,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 
-img_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_img/"
+img_path = "/home/nipun/Pictures/My"
 saved_location = "/home/nipun/Documents/Uni_Malta/Datasets/SuperResoultionDatasets/"
-dataset_name = "UBRIS"
-data_type = "train_img"
+dataset_name = "My"
+data_type = ""
 model_type = "ESRGAN"
 
 
@@ -55,6 +55,8 @@ sr_model = sr_model.to(device=device)
 sr_model = load_state_dict(sr_model,model_weights_path)
 
 sr_model.eval()
+
+torch.cuda.empty_cache()
 
 
 def preprocess_one_image(image_path: str, device: torch.device) -> Tensor:
