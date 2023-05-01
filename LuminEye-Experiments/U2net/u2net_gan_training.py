@@ -16,17 +16,14 @@ import segmentation_models_pytorch as smp
 import time 
 import wandb
 import sys
+from datetime import datetime
+from models import U2NELIGHTTHDR,U2NETHDR
+from multi_loss_functions import *
 
-# Less Parameter Model with Gan INPUT
-from u2net_lightgan import U2NETHDR
-
-sys.path.insert(1,"../utils/")
-from losses import DiceLoss,IoU,pixel_wise_accuracy,get_lr
 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-dice_loss = DiceLoss(mode="multiclass")
 
 train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_img/"
 train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/train_masks/"
@@ -36,7 +33,7 @@ val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULT
 
 val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_masks/" 
 n_classes = 3
-batch_size = 1
+batch_size = 4
 
 train_x = sorted(
         glob(f"{train_images}/*"))
@@ -47,28 +44,19 @@ valid_x = sorted(
 valid_y = sorted(
         glob(f"{val_masks }/*"))
 
+def get_current_date_time():
+    now = datetime.now()
+    year = now.strftime("%Y")
 
-def multi_dice_loss_function(y0, y1, y2,y3, y4, y5, y6,y): # Final Argument== Mask
-    loss_1 = dice_loss(y0,y)
-            
-    loss_2 = dice_loss(y1,y)
-            
-    loss_3 = dice_loss(y2,y)
-             
-    loss_4 = dice_loss(y3,y)
-      
-    loss_5 = dice_loss(y4,y)
-      
-      
-    loss_6 = dice_loss(y5,y)
-      
-      
-    loss_7 = dice_loss(y6,y)
-      
-    loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + loss_6 + loss_7
+
+    month = now.strftime("%m")
+
+
+    day = now.strftime("%d")
+
+    time = now.strftime("%H:%M:%S")
     
-    return loss_1,loss
-
+    return f"{year}_{month}_{day}_{time}_"
 
 class Iris(Dataset):
     def __init__(self,images,masks,transform = None):
@@ -78,45 +66,33 @@ class Iris(Dataset):
     def __len__(self):
         return len(self.images)
     def __getitem__(self,index):
-        img = np.array(Image.open(self.images[index]))
-        mask = np.array(Image.open(self.masks[index]))
+        
+        image = Image.open(self.images[index])
+        img = np.array(image.resize((64,64)))
+        
+        mask = Image.open(self.masks[index])
+        mask = np.array(mask.resize((256,256)))
+        
+               
         if self.transforms is not None:
             aug = self.transforms(image=img,mask=mask)
             img = aug['image']
             mask = aug['mask']
         return img,mask
     
-def get_images(train_x,train_y,test_x,test_y,train_transform,val_transform,batch_size=1,shuffle=True,pin_memory=True):
-    train_data = Iris(train_x,train_y,transform = train_transform)
-    val_data  = Iris(test_x,test_y,transform =val_transform)
+def get_images(train_x,train_y,test_x,test_y,transform,batch_size=4,shuffle=True,pin_memory=True):
+    train_data = Iris(train_x,train_y,transform = transform)
+    val_data  = Iris(test_x,test_y,transform =transform)
     train_batch = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=shuffle, drop_last=True)
     test_batch = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=False,drop_last=True)
     return train_batch,test_batch
 
-
-
-
-train_transform = A.Compose([
-    A.Resize(64,64),
-    A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2,
-                               rotate_limit=30, p=0.5),
-    A.RGBShift(r_shift_limit=25, g_shift_limit=25,
-                       b_shift_limit=25, p=0.5),
-    A.RandomBrightnessContrast(
-                brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-    A.MotionBlur(p=0.3),
+transform = A.Compose([
     A.augmentations.transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
     ToTensorV2()
 ])
 
-val_transform = A.Compose([
-    A.Resize(64,64),
-    A.augmentations.transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
-    ToTensorV2()
-])
-
-train_batch,val_batch = get_images(train_x,train_y,valid_x,valid_y,train_transform,val_transform,batch_size=batch_size)
-
+train_batch,val_batch = get_images(train_x,train_y,valid_x,valid_y,transform,batch_size=batch_size)
 def visualize_multiclass_mask(train_batch):
     for img,mask in train_batch:
         print(img.shape)
@@ -177,7 +153,9 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             
             
             #Multi DiceBceLoss
-            loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            # loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            
+            loss_1,loss = multi_boundaryLossV1_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
             
             
             #evaluation metrics
@@ -285,11 +263,13 @@ if __name__ == "__main__":
     # model = U2NET(in_ch=3,out_ch=n_classes)
     # model=model.to(device)
     
+    # model = U2NETHDR(in_ch=3,out_ch=n_classes)
+    
     model = U2NETHDR(in_ch=3,out_ch=n_classes)
     
     model = model.to(device)
     
-    experiment_name = "Short_Experiment"
+    experiment_name = "Experiment"
 
     optimizer = torch.optim.Adam(model.parameters(), lr=max_lr, weight_decay=weight_decay)
     sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epoch,
@@ -303,7 +283,7 @@ if __name__ == "__main__":
                     "length_val": len(val_batch),
                     "Augmentations":["ShiftScaleRotate","RGBShift","RandomBrightnessContrast","MotionBLur"],
                     "number_of_classes":n_classes,
-                    "Resize_amt":(512,512),
+                    "Resize_amt":(64,64),
                     "Base Model": "U2NET",
                     "BackBone":"",
                     "Dataset": "Short",
