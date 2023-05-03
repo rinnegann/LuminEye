@@ -155,7 +155,9 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             #Multi DiceBceLoss
             # loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
             
-            loss_1,loss = multi_boundaryLossV1_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            # loss_1,loss = multi_boundaryLossV1_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            
+            loss_1,loss = multi_distBinary_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             
             #evaluation metrics
