@@ -18,10 +18,11 @@ import cv2
 import time 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+#
+# /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/Miche_model_2023_04_24_04:04:09_val_iou0.732.pt"
 
 
-
-model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/Miche_model_2023_04_24_04:04:09_val_iou0.732.pt")
+model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/U2NET_Model_epoch_200_batch_8_BoundaryLossV1/Miche_model_2023_05_01_21:27:24_val_iou0.675.pt")
 
 val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/MICHE_MULTICLASS/Dataset/val_img"
 
@@ -221,6 +222,6 @@ def main(saved_location):
 
 
 if __name__ == "__main__":
-    experiment_name = "Predictions/u2net_light_with_ersgan"
+    experiment_name = "Predictions/u2net_with_ersgan_boundaryv1loss"
     iou = main(experiment_name)
     print(f"Iou Value is {iou/len(val_batch)}")

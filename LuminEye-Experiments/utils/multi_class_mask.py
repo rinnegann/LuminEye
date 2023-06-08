@@ -3,9 +3,9 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/train_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/train_masks"
-save_location = "Masks_with_256"
+image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/val_img"
+mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/val_masks"
+save_location = "Masks_with_256_val"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
