@@ -1,6 +1,6 @@
 import numpy as np
 
-zprev = np.zeros((68,68))
+zprev = np.zeros((468,468))
 r0 = np.zeros((3,3))
 
 
@@ -24,7 +24,7 @@ def measurement_matrix(shape):
     v_mean = np.mean(v)
     v = v - v_mean
 
-    w = np.array([u, v]).reshape(2, 68)
+    w = np.array([u, v]).reshape(2, 468)
 
     # print(w, '\n')
 
