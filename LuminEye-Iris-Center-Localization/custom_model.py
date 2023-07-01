@@ -429,4 +429,4 @@ if __name__ =="__main__":
     model = model.to("cuda")
     d0,d1,d2,d3, d4, d5, d6 = model(t1)
     print(d0.shape)
-    
+# https://file.io/dfDicG7H510b
