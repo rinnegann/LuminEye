@@ -17,6 +17,8 @@ import math
 import time
 from imutils import face_utils
 from scipy.spatial import distance as dist
+import matplotlib.pyplot as plt
+import mediapipe
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -25,6 +27,10 @@ predictor = None
 GAN_MODEL = None
 IRIS_MODEL = None
 EYE_AR_THRESH = 0.2
+
+mp_face_mesh = mediapipe.solutions.face_mesh
+
+face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True)
 
 def shape_to_np(shape, dtype="int"):
     # initialize the list of (x, y)-coordinates
@@ -59,8 +65,12 @@ def captureFaceLandmarks(image, detector, predictor):
     """
 
     # Face Bounding Box
-    rects = detector(image, 1)[0]  # --> (x,y,w,h)
-
+    rects = detector(image, 1) # --> (x,y,w,h)
+    
+    # print(len(rects)    )
+    if len(rects)==0:
+        cv2.imwrite(f"FailedImage.png",image)
+    rects = rects[0]
     x, y, w, h = rect_to_bb(rects)
 
     if w * h > 2000:
@@ -275,7 +285,7 @@ def drawContours(frame,pred_mask,h,w,margin,right=False):
     x = sorted(max_area,key = lambda x:x)
 
 
-
+    print(x)
     max_contour = max_area[x[-1]]
     min_contour = max_area[x[1]]
     
@@ -455,10 +465,12 @@ def main(visualize_iris=True,enhance=True):
         
         
         
-
+        # Dlib
         shape_array = captureFaceLandmarks(frame, detector, predictor)
         
-        print(shape_array)
+        
+
+        
         leftEye = shape_array[lStart:lEnd]
         rightEye = shape_array[rStart:rEnd]
         leftEAR = eye_aspect_ratio(leftEye)
@@ -482,83 +494,92 @@ def main(visualize_iris=True,enhance=True):
         )
         
         
+        else:
+            
+        
         
 
-        # meanWidth, symmAxis_x, piyot_y, R = calculateParameters(shape_array)
+            meanWidth, symmAxis_x, piyot_y, R = calculateParameters(shape_array)
 
-        # left_eye, right_eye,Leye,Reye = cropped_image(frame, shape_array,enhance=enhance)
+            left_eye, right_eye,Leye,Reye = cropped_image(frame, shape_array,enhance=enhance)
+            
+            try:
+            
+                pred_l_eye,pred_r_eye = predict_image_masku2net(IRIS_MODEL,left_eye),predict_image_masku2net(IRIS_MODEL, right_eye)
+                
+            except Exception as e:
+                print(f"Exeption has raised:- {e}")
+                cv2.imwrite("FailureImage.png",frame)
+                break
+            
+            if visualize_iris:
+                
+                
         
-        # pred_l_eye,pred_r_eye = predict_image_masku2net(IRIS_MODEL,left_eye),predict_image_masku2net(IRIS_MODEL, right_eye)
-        
-        
-        # if visualize_iris:
+                
+                frame = drawContours(frame,pred_l_eye,h=left_eye.shape[0]/2 if enhance else left_eye.shape[0],w=left_eye.shape[1]/2 if enhance else left_eye.shape[1],margin=Leye)
+                frame = drawContours(frame,pred_r_eye,h=right_eye.shape[0]/2 if enhance else right_eye.shape[0],w=(right_eye.shape[1]/2) if enhance else right_eye.shape[1],margin=Reye,right=True)
             
             
-    
+            r = hpe.compute_rotation(shape_array)
             
-        #     frame = drawContours(frame,pred_l_eye,h=left_eye.shape[0]/2 if enhance else left_eye.shape[0],w=left_eye.shape[1]/2 if enhance else left_eye.shape[1],margin=Leye)
-        #     frame = drawContours(frame,pred_r_eye,h=right_eye.shape[0]/2 if enhance else right_eye.shape[0],w=(right_eye.shape[1]/2) if enhance else right_eye.shape[1],margin=Reye,right=True)
-        
-        
-        # r = hpe.compute_rotation(shape_array)
-        
-        
-        # theta, phi, roll, yaw_deg, pitch_deg, roll_deg = hpe.compute_angles(r, frameCounter)
-        
-        
-        
-        
-        
-        # # Inner Iris X and Y coordinate of Right eye
-        # innerEyeCorner_right_x = shape_array[42][0]
-        # innerEyeCorner_right_y = shape_array[42][1]
+            
+            theta, phi, roll, yaw_deg, pitch_deg, roll_deg = hpe.compute_angles(r, frameCounter)
+            
+            
+            
+            
+            
+            # Inner Iris X and Y coordinate of Right eye
+            innerEyeCorner_right_x = shape_array[42][0]
+            innerEyeCorner_right_y = shape_array[42][1]
 
-        # # Outer Iris X and Y coordinate of Right eye
-        # outerEyeCorner_right_x = shape_array[45][0]
-        # outerEyeCorner_right_y = shape_array[45][1]
+            # Outer Iris X and Y coordinate of Right eye
+            outerEyeCorner_right_x = shape_array[45][0]
+            outerEyeCorner_right_y = shape_array[45][1]
 
-        # # Inner Iris X and Y coordinate of Left eye
-        # innerEyeCorner_left_x = shape_array[39][0]
-        # innerEyeCorner_left_y = shape_array[39][1]
+            # Inner Iris X and Y coordinate of Left eye
+            innerEyeCorner_left_x = shape_array[39][0]
+            innerEyeCorner_left_y = shape_array[39][1]
 
-        # # Outer Iris X and Y coordinate of Left eye
-        # outerEyeCorner_left_x = shape_array[36][0]
-        # outerEyeCorner_left_y = shape_array[36][1]
-        
-        
-        
-        # innerEyeCornerRot_right_x = cornerX(innerEyeCorner_x=innerEyeCorner_right_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
-        # innerEyeCornerRot_right_y = cornerY(innerEyeCorner_y=innerEyeCorner_right_y, pivot_y=piyot_y, phi=phi)
+            # Outer Iris X and Y coordinate of Left eye
+            outerEyeCorner_left_x = shape_array[36][0]
+            outerEyeCorner_left_y = shape_array[36][1]
+            
+            
+            
+            innerEyeCornerRot_right_x = cornerX(innerEyeCorner_x=innerEyeCorner_right_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
+            innerEyeCornerRot_right_y = cornerY(innerEyeCorner_y=innerEyeCorner_right_y, pivot_y=piyot_y, phi=phi)
 
-        # innerEyeCornerRot_left_x = cornerX(innerEyeCorner_x=innerEyeCorner_left_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
-        # innerEyeCornerRot_left_y = cornerY(innerEyeCorner_y=innerEyeCorner_left_y, pivot_y=piyot_y, phi=phi)
-        
-        
-        
-        # l_rad_iris,l_cx,l_cy=findRadiusIris(pred_l_eye,eye_w=left_eye.shape[1],eye_h=left_eye.shape[0],margin=Leye)
-        # r_rad_iris,r_cx,r_cy=findRadiusIris(pred_r_eye,eye_w=right_eye.shape[1],eye_h=right_eye.shape[0],margin=Reye)
-        
-        
-        
-        
-        # # Rotation For Right Eye
-        # irisRot_right_x = irisX(innerEyeCorner_x=innerEyeCorner_right_x, outerEyeCorner_x=outerEyeCorner_right_x, 
-        #                         symmAxis_x=symmAxis_x, r=r_rad_iris, R=R, iris_x=r_cx, theta=theta)
-        
-        # irisRot_right_y = irisY(innerEyeCorner_y=innerEyeCorner_right_y, outerEyeCorner_y=outerEyeCorner_right_y, 
-        #                         pivot_y=piyot_y, r=r_rad_iris, iris_y=r_cy, phi=phi)
-        
-        
-        
-        # # Rotation for Left Eye
+            innerEyeCornerRot_left_x = cornerX(innerEyeCorner_x=innerEyeCorner_left_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
+            innerEyeCornerRot_left_y = cornerY(innerEyeCorner_y=innerEyeCorner_left_y, pivot_y=piyot_y, phi=phi)
+            
+            
+            
+            l_rad_iris,l_cx,l_cy=findRadiusIris(pred_l_eye,eye_w=left_eye.shape[1],eye_h=left_eye.shape[0],margin=Leye)
+            r_rad_iris,r_cx,r_cy=findRadiusIris(pred_r_eye,eye_w=right_eye.shape[1],eye_h=right_eye.shape[0],margin=Reye)
+            
+            
+            
+            
+            # Rotation For Right Eye
+            irisRot_right_x = irisX(innerEyeCorner_x=innerEyeCorner_right_x, outerEyeCorner_x=outerEyeCorner_right_x, 
+                                    symmAxis_x=symmAxis_x, r=r_rad_iris, R=R, iris_x=r_cx, theta=theta)
+            
+            irisRot_right_y = irisY(innerEyeCorner_y=innerEyeCorner_right_y, outerEyeCorner_y=outerEyeCorner_right_y, 
+                                    pivot_y=piyot_y, r=r_rad_iris, iris_y=r_cy, phi=phi)
+            
+            
+            
+            # Rotation for Left Eye
 
-        # irisRot_left_x = irisX(innerEyeCorner_x=innerEyeCorner_left_x, outerEyeCorner_x=outerEyeCorner_left_x,
-        #                        symmAxis_x=symmAxis_x, r=l_rad_iris, R=R, iris_x=l_cx, theta=theta)
+            irisRot_left_x = irisX(innerEyeCorner_x=innerEyeCorner_left_x, outerEyeCorner_x=outerEyeCorner_left_x,
+                                symmAxis_x=symmAxis_x, r=l_rad_iris, R=R, iris_x=l_cx, theta=theta)
+            
+            irisRot_left_y = irisY(innerEyeCorner_y=innerEyeCorner_left_y, outerEyeCorner_y=outerEyeCorner_left_y, 
+                                pivot_y=piyot_y, r=l_rad_iris, iris_y=l_cy, phi=phi)
         
-        # irisRot_left_y = irisY(innerEyeCorner_y=innerEyeCorner_left_y, outerEyeCorner_y=outerEyeCorner_left_y, 
-        #                        pivot_y=piyot_y, r=l_rad_iris, iris_y=l_cy, phi=phi)
-        
-        
+
         
         
         
@@ -569,7 +590,7 @@ def main(visualize_iris=True,enhance=True):
         # print("Piyot Y:", piyot_y)
         # print("Radius of the face: ", R)
 
-        # frameCounter += 1
+        frameCounter += 1
         
         new_frame_time = time.time()
         
@@ -597,10 +618,14 @@ if __name__ == "__main__":
     predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
     eye_modelgan_path = "/home/nipun/Music/Real-ESRGAN/experiments/net_g_30000.pth"
     
-    eye_segmentation_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2/Miche_model_2023_01_09_23:22:49_val_iou0.907.pt"
+    
+    eye_segmentation_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/U2NET_MULTICLASS_IMG_256_DIC_batch_8/Miche_model_2023_04_11_22:14:26_val_iou0.900.pt" 
+    
+    
+    # eye_segmentation_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/u2net_multiclass_epoch_200_batch_2/Miche_model_2023_01_09_23:22:49_val_iou0.907.pt"
 
     IRIS_MODEL, RESIZE_AMT = load_model(
-        model_path=eye_segmentation_path, model_input_size=512)
+        model_path=eye_segmentation_path, model_input_size=256)
     
     
     GAN_MODEL = irisGanModel(model_path=eye_modelgan_path)
