@@ -137,7 +137,7 @@ def update_optimizer(optimizer, lr):
 
 
 
-def main_training(model, optimizer, train_dl, test_dl, epochs):
+def main_training(model, optimizer, train_dl, test_dl, epochs,loss_fn):
     idx = 0
 
     prev_loss = 0
@@ -154,7 +154,8 @@ def main_training(model, optimizer, train_dl, test_dl, epochs):
 
             out_bb = model(x)
 
-            loss_bb = F.l1_loss(out_bb, y_bb, reduction="none").sum(1)
+            loss_bb = loss_fn(out_bb,y_bb).sum(1)
+            # loss_bb = F.l1_loss(out_bb, y_bb, reduction="none").sum(1)
             loss_bb = loss_bb.sum()
 
             loss = loss_bb
@@ -169,7 +170,7 @@ def main_training(model, optimizer, train_dl, test_dl, epochs):
 
             sum_loss += loss.item()
 
-        val_loss = val_epochs(model, test_dl)
+        val_loss = val_epochs(model, test_dl,loss_fn)
 
         if i == 0:
             prev_loss = val_loss
@@ -184,7 +185,7 @@ def main_training(model, optimizer, train_dl, test_dl, epochs):
         train_metrics = {"train/epoch": i+1, "train/train_loss": train_loss}
 
         val_metrics = {"val/epoch": i+1, "val/val_loss": val_loss}
-        wandb.log({**train_metrics, **val_metrics})
+        # wandb.log({**train_metrics, **val_metrics})
 
         print(f"Epoch Number {i+1}")
         print("train_loss %.3f " % (train_loss))
@@ -192,7 +193,7 @@ def main_training(model, optimizer, train_dl, test_dl, epochs):
         print("*"*8)
         
         
-def val_epochs(model,val_loader):
+def val_epochs(model,val_loader,loss_fn):
     
     model.eval()
     total_val_loss = 0
@@ -207,7 +208,8 @@ def val_epochs(model,val_loader):
         
         total += x.shape[0]
         with torch.no_grad():
-            loss_bb = F.l1_loss(out_bb,y_bb,reduction='none').sum(1)
+            # loss_bb = F.l1_loss(out_bb,y_bb,reduction='none').sum(1)
+            loss_bb = loss_fn(out_bb,y_bb).sum(1)
             loss_bb = loss_bb.sum()
             
             total_val_loss += loss_bb.item()
@@ -217,18 +219,20 @@ def val_epochs(model,val_loader):
 if __name__ == '__main__':
     
     
-    config = {"epochs":1000,
+    config = {"epochs":200,
                         "max_learning_rate":0.006}
 
 
-    wandb.init(project="LuminEys-Iris",entity="rinnegann",
-            name="Regression_Resent_epoch_1000_l1_loss_batch_8",
-            config=config)
+    # wandb.init(project="LuminEys-Iris",entity="rinnegann",
+    #         name="Regression_Resent_epoch_200_mse_summation_batch_8",
+    #         config=config)
+    
+    loss_fn = nn.MSELoss(reduction='none')
     
     model = BB_model().cuda()
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameters, lr=0.006)
 
     update_optimizer(optimizer, 0.001)
-    main_training(model=model,optimizer=optimizer,train_dl=trainLoader,test_dl=testLoader,epochs=1000)
+    main_training(model=model,optimizer=optimizer,train_dl=trainLoader,test_dl=testLoader,epochs=200,loss_fn=loss_fn)
                 
