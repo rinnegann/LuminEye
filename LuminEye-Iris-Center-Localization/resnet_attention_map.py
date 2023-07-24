@@ -37,14 +37,14 @@ from torchvision import models
 
 
 
-resnet = models.resnet34(pretrained=True)
 
 
-IMAGE_DIR = "/home/user/Documents/LuminEye/LuminEye/LuminEye-Iris-Center-Localization/G4_BIO_EYES"
+
+IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/G4_BIO_EYES"
 trn_df = pd.read_csv("train_data.csv")
 val_df = pd.read_csv("val_data.csv")
 
-RESIZE_AMT = 64
+RESIZE_AMT =  64
 BACTH_SIZE = 4
 
 
@@ -124,67 +124,79 @@ testLoader = DataLoader(test_ds, batch_size=BACTH_SIZE,
 	num_workers=os.cpu_count(), pin_memory=True,drop_last=True)
 
 
+def main(dataLoader,model):
 
-x,y = next(iter(trainLoader))
-
-unnorm = UnNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-
-unnorm_batch = unnorm(x)
-
-features_extraction = list(resnet.children())[:8]
-
-resnet_featuresEachStage = []
-
-for i in range(len(features_extraction)):
+    x,y = next(iter(dataLoader))
     
-    if i== 2:
-        feature= features_extraction[:i+1]
-        output = nn.Sequential(*feature)
+    input_image = x.clone().detach()
 
-        image = output(x)
+    unnorm = UnNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 
-        resnet_featuresEachStage.append(image)
+    unnorm_batch = unnorm(x)
 
-    elif i == 3:
+    features_extraction = list(model.children())[:8]
 
-        image = features_extraction[i](image)
-
-    elif i>3:
-
-        feature_1 = features_extraction[i]
-        output   = nn.Sequential(*feature_1)
-
-        image = output(image)
-        resnet_featuresEachStage.append(image)
-
-fig,axs = plt.subplots(x.shape[0],len(resnet_featuresEachStage)+1,figsize=(15, 15))
-axs[0][0].set_title('Image')
-axs[0][1].set_title('First Conv')
-axs[0][2].set_title('Second Conv')
-axs[0][3].set_title('Third Conv')
-axs[0][4].set_title('Fourth Conv')
-axs[0][5].set_title('Fifth Conv')
-for num_img in range(x.shape[0]):
-
-    img = unnorm_batch[num_img].permute(1,2,0).detach().numpy()
-    axs[num_img][0].imshow(img)
-    axs[num_img][0].axis('off')
+    resnet_featuresEachStage = []
     
-    for each_stage in range(len(resnet_featuresEachStage)):
+    for i in range(len(features_extraction)):
         
+        if i== 2:
+            feature= features_extraction[:i+1]
+            output = nn.Sequential(*feature)
+    
+            image = output(input_image)
+    
+            resnet_featuresEachStage.append(image)
+    
+        elif i == 3:
+    
+            image = features_extraction[i](image)
+    
+        elif i>3:
+    
+            feature_1 = features_extraction[i]
+            output   = nn.Sequential(*feature_1)
+    
+            image = output(image)
+            resnet_featuresEachStage.append(image)
 
-        feature_maps = resnet_featuresEachStage[each_stage]
+    fig,axs = plt.subplots(x.shape[0],len(resnet_featuresEachStage)+1,figsize=(15, 15))
+    axs[0][0].set_title('Image')
+    axs[0][1].set_title('First Conv')
+    axs[0][2].set_title('Second Conv')
+    axs[0][3].set_title('Third Conv')
+    axs[0][4].set_title('Fourth Conv')
+    axs[0][5].set_title('Fifth Conv')
+    for num_img in range(x.shape[0]):
+        
+        img = unnorm(input_image[num_img]).permute(1,2,0).numpy()
+        # img = unnorm_batch[num_img]
+        axs[num_img][0].imshow(img)
+        axs[num_img][0].axis('off')
+        
+        for each_stage in range(len(resnet_featuresEachStage)):
+            
 
-        img_feature = feature_maps[num_img]
+            feature_maps = resnet_featuresEachStage[each_stage]
 
-        # Element wise addition along batch dimenions
-        summed_img = torch.sum(img_feature,dim=0).detach().numpy()
+            img_feature = feature_maps[num_img]
+            
+            print(img_feature.shape)
 
-        print(summed_img .shape)
+            # Element wise addition along batch dimenions
+            summed_img = torch.sum(img_feature,dim=0).detach().numpy()
 
-        axs[num_img][each_stage+1].imshow(summed_img)
-        axs[num_img][each_stage+1].axis('off')
 
-plt.show()
-plt.tight_layout()
+            # print(summed_img.shape)
+            
+            axs[num_img][each_stage+1].imshow(summed_img)
+            axs[num_img][each_stage+1].axis('off')
 
+    plt.show()
+    plt.tight_layout()
+    plt.close()
+
+
+if __name__== '__main__':
+    resnet = models.resnet34(pretrained=True)
+    main(trainLoader,resnet)
