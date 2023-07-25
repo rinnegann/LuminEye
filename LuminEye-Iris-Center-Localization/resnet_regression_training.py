@@ -41,12 +41,12 @@ device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from torchvision.models.efficientnet import efficientnet_b3
 
 
-IMAGE_DIR = "/home/user/Documents/LuminEye/LuminEye/LuminEye-Iris-Center-Localization/G4_BIO_EYES"
-trn_df = pd.read_csv("train_data.csv")
-val_df = pd.read_csv("val_data.csv")
+IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/Images/"
+trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_train.csv")
+val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_val.csv")
 
-RESIZE_AMT = 256
-BACTH_SIZE = 16
+RESIZE_AMT = 64
+BACTH_SIZE = 64
 
 train_transforms =  A.Compose([
     A.Resize(width=RESIZE_AMT,height=RESIZE_AMT),
@@ -107,58 +107,71 @@ testLoader = DataLoader(test_ds, batch_size=BACTH_SIZE,
 
 
 
-class BB_model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        efficientnet = efficientnet_b3(pretrained=True)
-        
-        layers = list(efficientnet.children())[:1]
-        self.features1 = nn.Sequential(*layers)
-
-    
-        self.bb = nn.Sequential(nn.BatchNorm1d(1536),nn.Linear(1536,512),nn.ReLU(inplace=True),
-                                nn.BatchNorm1d(512),nn.Linear(512,2))
-        
-    def forward(self,x):
-        x = self.features1(x) #[1, 1536, 8, 8]
-        x = F.relu(x)
-        
-        
-        x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,1536,1,1]
-        
-        
-        x = x.view(x.shape[0],-1) # [1,1536]
-
-        
-        
-        return self.bb(x)
-
-
 # class BB_model(nn.Module):
 #     def __init__(self):
 #         super().__init__()
+#         efficientnet = efficientnet_b3(pretrained=True)
         
-#         resnet = models.resnet34(pretrained=True)
-#         layers = list(resnet.children())[:8]
-#         self.features1 = nn.Sequential(*layers[:6])
-#         self.features2  = nn.Sequential(*layers[6:])
+#         layers = list(efficientnet.children())[:1]
+#         self.features1 = nn.Sequential(*layers)
+
     
-#         self.bb = nn.Sequential(nn.BatchNorm1d(512),nn.Linear(512,2))
+#         self.bb = nn.Sequential(nn.BatchNorm1d(1536),nn.Linear(1536,512),nn.ReLU(inplace=True),
+#                                 nn.BatchNorm1d(512),nn.Linear(512,2))
         
 #     def forward(self,x):
-#         x = self.features1(x) # 1, 128, 32, 32
-        
-#         x = self.features2(x) # [1, 512, 8, 8]
-        
+#         x = self.features1(x) #[1, 1536, 8, 8]
 #         x = F.relu(x)
         
         
-#         x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,512,1,1]
+#         x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,1536,1,1]
         
         
-#         x = x.view(x.shape[0],-1) # [1, 512]
+#         x = x.view(x.shape[0],-1) # [1,1536]
+
+        
         
 #         return self.bb(x)
+
+
+class BB_model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        resnet = models.resnet34(weights=True)
+        
+        # for param in resnet.parameters():
+            
+        #     param.requires_grad = False
+        
+        layers = list(resnet.children())[:8]
+        self.features1 = nn.Sequential(*layers[:6])
+        self.features2  = nn.Sequential(*layers[6:])
+    
+        self.bb = nn.Sequential(
+                                nn.Linear(512,256),
+                                nn.BatchNorm1d(256),
+                                nn.ReLU(inplace=True),
+                                nn.Linear(256,128),
+                                nn.BatchNorm1d(128),
+                                nn.ReLU(inplace=True),
+                                nn.Linear(128,2),
+                                )
+        
+    def forward(self,x):
+        x = self.features1(x) # 1, 128, 32, 32
+        
+        x = self.features2(x) # [1, 512, 8, 8]
+        
+        x = F.relu(x)
+        
+        
+        x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,512,1,1]
+        
+        
+        x = x.view(x.shape[0],-1) # [1, 512]
+        
+        return self.bb(x)
     
     
 def update_optimizer(optimizer, lr):
@@ -182,6 +195,8 @@ def main_training(model, optimizer, train_dl, test_dl, epochs,loss_fn):
 
             y_bb = y_bb.cuda()
 
+            
+    
             out_bb = model(x)
 
             loss_bb = loss_fn(out_bb,y_bb).sum(1)
@@ -249,14 +264,14 @@ def val_epochs(model,val_loader,loss_fn):
 if __name__ == '__main__':
     
 
-    n_epoch = 200
+    n_epoch = 500
     
     config = {"epochs":n_epoch ,
                         "max_learning_rate":0.006}
 
 
     wandb.init(project="LuminEys-Iris",entity="rinnegann",
-            name=f"Regression_efficiennet_epoch_{n_epoch}_mae_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}",
+            name=f"Regression_Resnet__epoch_{n_epoch}_mae_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}_for_gi4e_bioid_h2head",
             config=config)
     
     # loss_fn = nn.MSELoss(reduction='none')
