@@ -7,21 +7,6 @@ import mediapipe
 import pandas as pd
 
 
-def getCenterofEye(coord, leye, reye):
-    
-
-    left_center = coord[2:4]
-    right_center = coord[0:2]
-
-    left_center = [float(left_center[0])-leye["top_left"]
-                   [0], float(left_center[1])-leye["top_left"][1]]
-
-    right_center = [float(right_center[0])-reye["top_left"]
-                    [0], float(right_center[1])-reye["top_left"][1]]
-
-    return left_center, right_center
-
-
 def mpArrayToNumpy(landmark_array, img):
 
     shape_arr = []
