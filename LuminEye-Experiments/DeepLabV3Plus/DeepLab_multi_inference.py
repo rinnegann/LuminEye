@@ -17,54 +17,41 @@ import torch.nn.functional as F
 import cv2
 import time 
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-
+import hydra
+from omegaconf import DictConfig, OmegaConf
+from hydra import compose,initialize_config_dir
+from utils import decode_segmap,UnNormalize
+from datasets import Iris
+sys.path.insert(1, "../utils/")
+from losses import IoU, pixel_wise_accuracy, get_lr
 
 model = torch.load("/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/DeepLabV3Plus/DeepLabv3_efficiennet_backbone_multiclass_boundary_awaweloss_epoch_200_batch_4/model-0.902.pt")
 
 val_images = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/val_image"
 
 val_masks =  "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/Images_with_Padded/multi_classes" 
-n_classes = 3
-batch_size = 1
-
-colors = [ [  0,   0,   0],[0,255,0],[0,0,255]]
-label_colours = dict(zip(range(n_classes), colors))
-
-valid_classes = [0,85, 170]
-class_names = ["Background","Pupil","Iris"]
 
 
-class_map = dict(zip(valid_classes, range(len(valid_classes))))
-n_classes=len(valid_classes)
 
-
-def decode_segmap(temp):
-    #convert gray scale to color
+def config_initialize() -> None:
     
-    # print(temp.size())
-    temp=temp.numpy()
-    
-    # temp = temp[:,:,0]
-    # print(temp.shape())
-    r = temp.copy()
-    g = temp.copy()
-    b = temp.copy()
-    for l in range(0, n_classes):
-        r[temp == l] = label_colours[l][0]
-        g[temp == l] = label_colours[l][1]
-        b[temp == l] = label_colours[l][2]
-    print(r.shape)
-    print(g.shape)
-    print(b.shape)
-    rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
-    rgb[:, :, 0] = r / 255.0
-    rgb[:, :, 1] = g / 255.0
-    rgb[:, :, 2] = b / 255.0
-    return rgb
+    with initialize_config_dir(version_base="1.3", config_dir="/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/DeepLabV3Plus"):
+
+        cfg = compose(
+            config_name="deeplab_config.yaml", return_hydra_config=True, overrides=[]
+        )
+
+    return cfg
 
 
+config = config_initialize()
+n_classes = config.MultiClassSegmentation.num_classes
+batch_size = config.MultiClassSegmentation.batch_size
+colors = config.MultiClassSegmentation.colors
+label_colours = config.MultiClassSegmentation.label_colours
+valid_classes = config.MultiClassSegmentation.valid_classes
+class_names = config.MultiClassSegmentation.class_names
+class_map = config.MultiClassSegmentation.class_map
 
 
 valid_x = sorted(
@@ -72,57 +59,13 @@ valid_x = sorted(
 valid_y = sorted(
     
         glob(f"{val_masks }/*"))
-def IoU(pred , true_pred , smooth =1e-10 , n_classes=n_classes):
-  with torch.no_grad():
-    pred = torch.argmax(F.softmax(pred , dim =1) , dim=1)
-    pred = pred.contiguous().view(-1)
-    true_pred = true_pred.contiguous().view(-1)
 
-    iou_class = []
-    for value in range(0, n_classes):
-      true_class = pred == value
-      true_label = true_pred == value
-
-      if true_label.long().sum().item()==0:
-        iou_class.append(np.nan)
-        
-      else:
-    
-        inter = torch.logical_and(true_class, true_label).sum().float().item()
-        union = torch.logical_or(true_class , true_label).sum().float().item()
-
-        iou = (inter + smooth)/(union + smooth)
-        iou_class.append(iou)
-
-    return np.nanmean(iou_class)
-
-class UnNormalize(object):
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-
-    def __call__(self, tensor):
-        """
-        Args:
-            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-        Returns:
-            Tensor: Normalized image.
-        """
-        for t, m, s in zip(tensor, self.mean, self.std):
-            t.mul_(s).add_(m)
-            # The normalize code -> t.sub_(m).div_(s)
-        return tensor
-    
     
 def predict_image_mask(model,image,mask):
     model.eval()
     
     image = image.to(device)
     mask = mask.to(device)
-    
-    # print(f"Original Image shape: {image.size()}")
-    
-    # print(f"Ground Truth Mask shape: {mask.size()}")
     
     with torch.no_grad():
         
@@ -140,21 +83,7 @@ def predict_image_mask(model,image,mask):
     return masked,score
 
 
-class Iris(Dataset):
-    def __init__(self,images,masks,transform = None):
-        self.transforms = transform
-        self.images = images
-        self.masks = masks
-    def __len__(self):
-        return len(self.images)
-    def __getitem__(self,index):
-        img = np.array(Image.open(self.images[index]))
-        mask = np.array(Image.open(self.masks[index]))
-        if self.transforms is not None:
-            aug = self.transforms(image=img,mask=mask)
-            img = aug['image']
-            mask = aug['mask']
-        return img,mask
+
     
 def get_images(test_x,test_y,val_transform,batch_size=1,shuffle=True,pin_memory=True):
     
@@ -183,11 +112,11 @@ def main(saved_location,seperate=False):
         
         pred_mask,iou_score = predict_image_mask(model,image,mask)
         
-        pred_mask = decode_segmap(pred_mask) * 255.0
+        pred_mask = decode_segmap(pred_mask,n_classes,label_colours) * 255.0
         
         
         
-        gt_mask = decode_segmap(mask) * 255.0
+        gt_mask = decode_segmap(mask,n_classes,label_colours) * 255.0
         
         img = unorm(image).permute(1,2,0).numpy() * 255.0
         
