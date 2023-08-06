@@ -8,37 +8,28 @@ from imutils import face_utils
 from torch.utils.data import Dataset
 import torch
 import torch.nn as nn
-import numpy as np
-import os
 from torch.utils.data import Dataset
-import torch
 from PIL import Image
-import matplotlib.pyplot as plt
 from albumentations.pytorch import ToTensorV2
 import albumentations as A
-import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
 from glob import glob
-import segmentation_models_pytorch as smp
 import torch.nn.functional as F
-import cv2
 import time 
-import mediapipe
 from torchvision import transforms
-from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import wandb
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-import glob
 from torchvision.models.feature_extraction import create_feature_extractor
 from torchvision import models
+from BaseModels.resnetModels import BB_model
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-from torchvision.models.efficientnet import efficientnet_b3
+
 
 
 IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/Images/"
@@ -107,73 +98,6 @@ testLoader = DataLoader(test_ds, batch_size=BACTH_SIZE,
 
 
 
-# class BB_model(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-#         efficientnet = efficientnet_b3(pretrained=True)
-        
-#         layers = list(efficientnet.children())[:1]
-#         self.features1 = nn.Sequential(*layers)
-
-    
-#         self.bb = nn.Sequential(nn.BatchNorm1d(1536),nn.Linear(1536,512),nn.ReLU(inplace=True),
-#                                 nn.BatchNorm1d(512),nn.Linear(512,2))
-        
-#     def forward(self,x):
-#         x = self.features1(x) #[1, 1536, 8, 8]
-#         x = F.relu(x)
-        
-        
-#         x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,1536,1,1]
-        
-        
-#         x = x.view(x.shape[0],-1) # [1,1536]
-
-        
-        
-#         return self.bb(x)
-
-
-class BB_model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        
-        resnet = models.resnet34(weights=True)
-        
-        # for param in resnet.parameters():
-            
-        #     param.requires_grad = False
-        
-        layers = list(resnet.children())[:8]
-        self.features1 = nn.Sequential(*layers[:6])
-        self.features2  = nn.Sequential(*layers[6:])
-    
-        self.bb = nn.Sequential(
-                                nn.Linear(512,256),
-                                nn.BatchNorm1d(256),
-                                nn.ReLU(inplace=True),
-                                nn.Linear(256,128),
-                                nn.BatchNorm1d(128),
-                                nn.ReLU(inplace=True),
-                                nn.Linear(128,2),
-                                )
-        
-    def forward(self,x):
-        x = self.features1(x) # 1, 128, 32, 32
-        
-        x = self.features2(x) # [1, 512, 8, 8]
-        
-        x = F.relu(x)
-        
-        
-        x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,512,1,1]
-        
-        
-        x = x.view(x.shape[0],-1) # [1, 512]
-        
-        return self.bb(x)
-    
-    
 def update_optimizer(optimizer, lr):
     for i, param_group in enumerate(optimizer.param_groups):
         param_group["lr"] = lr

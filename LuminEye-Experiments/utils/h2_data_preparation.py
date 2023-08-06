@@ -23,7 +23,7 @@ def mpArrayToNumpy(landmark_array, img):
     return np.array(shape_arr)
 
 
-def cropped_image(img, shape_array, padded_amt=30):
+def cropped_image(img, shape_array, padded_amt=15):
     """Cropped eye region 
 
     Args:
@@ -35,17 +35,19 @@ def cropped_image(img, shape_array, padded_amt=30):
 
     Leye = {"top_left": shape_array[70], "bottom_right": shape_array[133]}
 
-    Reye = {"top_left": shape_array[285],
-            "bottom_right": shape_array[446]}
+    Reye = {"top_left": shape_array[300],
+            "bottom_right": shape_array[362]}
 
     left_eye = img[Leye["top_left"][1]:Leye["bottom_right"][1] +
-                   15
+                    padded_amt
                    , Leye["top_left"][0]:Leye["bottom_right"][0]]
 
     right_eye = img[Reye["top_left"][1]:Reye["bottom_right"][1] +
-                    30, Reye["top_left"][0]-5:Reye["bottom_right"][0]]
+                    padded_amt, Reye["top_left"][0]:Reye["bottom_right"][0]]
     
     
+    
+    print(Reye)
     
     Reye['top_left'][0] = Reye['top_left'][0] - 5
 
@@ -55,8 +57,12 @@ mp_face_mesh = mediapipe.solutions.face_mesh
 
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True)
 
+def substract_list(l1,l2):  
+    
+    return [abs(l1[0]-l2[0]), abs(l1[1]-l2[1])]
 
-saved_dir = "./eyes"
+
+saved_dir = "./checkDataset"
 
 
 if not os.path.exists(saved_dir):
@@ -81,11 +87,39 @@ for idx,row in df.iterrows():
     
     print(row["ImageName"].replace('"','')[7:])
     
-    bbox = row["Coordinates"][1:-1].split(",")
+    bbox = list(map(float,row["Coordinates"][1:-1].split(",")))
+    
+    print(bbox)
     
     left_center = bbox[2:4]
     
+    left_inner_center = bbox[0:2]
+    
+    
+    
+
+    left_outer_center  = bbox[4:6]
+    
+    
+    print("#" * 10)
+    print("Left Eye")
+    print(f"Differece Between Inner EYE & Center {substract_list(left_center,left_inner_center)}")
+    print(f"Differece Between outer EYE & Center {substract_list(left_center,left_outer_center)}")
+    
+    
+    
     right_center = bbox[8:10]
+    
+    
+    right_inner_center = bbox[6:8]
+    
+    right_outer_center = bbox[10:12]
+    print("*" * 10)
+    print("Right Eye")
+    print(f"Differece Between Inner EYE & Center {substract_list(right_center,right_inner_center) }")
+    print(f"Differece Between outer EYE & Center {substract_list(right_center,right_outer_center)}")
+    
+    print("#" * 10)
     
     img = cv2.imread(img_path)
 

@@ -34,8 +34,7 @@ from sklearn.model_selection import train_test_split
 import albumentations as A
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision import models
-
-
+from resnet_regression_training import CenterDataset
 
 
 
@@ -77,42 +76,6 @@ val_transforms =  A.Compose([
     A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
     ToTensorV2(p=1)
 ])
-
-
-class CenterDataset(torch.utils.data.Dataset):
-    def __init__(self,df,image_dir=IMAGE_DIR,transforms=None):
-        self.image_dir = image_dir
-        self.df = df
-        self.image_ids = df.Image_Name.unique()
-        self.transforms = transforms
-        
-    def __getitem__(self,ix):
-        
-        img_id = self.image_ids[ix]
-        img_path = os.path.join(self.image_dir,img_id)
-        
-        img = cv2.imread(img_path)[:,:,::-1]
-        
-        data = self.df[self.df["Image_Name"]==img_id]
-        
-        
-        x1 = data["X1"].values[0] * RESIZE_AMT
-        y1 = data["Y1"].values[0] * RESIZE_AMT
-        
-        center_loc = torch.Tensor([x1,y1]).float()
-
-        if self.transforms:
-            transformed = self.transforms(image=img)
-            
-            image = transformed["image"]
-            
-    
-        return image,center_loc
-    def collate_fn(self,batch):
-        return tuple(zip(*batch))
-    
-    def __len__(self):
-        return len(self.image_ids)
 
 
 train_ds = CenterDataset(trn_df,transforms=train_transforms)

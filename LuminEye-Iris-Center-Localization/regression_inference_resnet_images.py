@@ -39,70 +39,22 @@ from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision import models
 
 from torchvision.models.efficientnet import efficientnet_b3
+from BaseModels.resnetModels import BB_model
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 from PIL import Image, ImageDraw
 
 
-
-
-regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/Regression_model_1.487574208665777.pth'
+regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/BEST_RESNET_REGRESSION_MODEL_FOR_CROPPED_EYES/Regression_model_1.487574208665777.pth'
 
 IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/Images/"
-trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_train.csv")
+
 val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_val.csv")
-
-
-class BB_model(nn.Module):
-    def __init__(self):
-        super().__init__()
-        
-        resnet = models.resnet34(weights=True)
-        
-        # for param in resnet.parameters():
-            
-        #     param.requires_grad = False
-        
-        layers = list(resnet.children())[:8]
-        self.features1 = nn.Sequential(*layers[:6])
-        self.features2  = nn.Sequential(*layers[6:])
-    
-        self.bb = nn.Sequential(
-                                nn.Linear(512,256),
-                                nn.BatchNorm1d(256),
-                                nn.ReLU(inplace=True),
-                                nn.Linear(256,128),
-                                nn.BatchNorm1d(128),
-                                nn.ReLU(inplace=True),
-                                nn.Linear(128,2),
-                                )
-        
-    def forward(self,x):
-        x = self.features1(x) # 1, 128, 32, 32
-        
-        x = self.features2(x) # [1, 512, 8, 8]
-        
-        x = F.relu(x)
-        
-        
-        x = nn.AdaptiveAvgPool2d((1,1))(x) # [ 1,512,1,1]
-        
-        
-        x = x.view(x.shape[0],-1) # [1, 512]
-        
-        return self.bb(x)
-
-
 
 
 RESIZE_AMT = 64
 BACTH_SIZE = 8
 
-train_transforms =  A.Compose([
-    A.Resize(width=RESIZE_AMT,height=RESIZE_AMT),
-    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-    ToTensorV2(p=1)
-])
 
 val_transforms =  A.Compose([
     A.Resize(width=RESIZE_AMT,height=RESIZE_AMT),
@@ -147,11 +99,10 @@ class CenterDataset(torch.utils.data.Dataset):
         return len(self.image_ids)
 
 
-train_ds = CenterDataset(trn_df,transforms=train_transforms)
+
 test_ds = CenterDataset(val_df,transforms=val_transforms)
 
-trainLoader = DataLoader(train_ds, batch_size=BACTH_SIZE,
-	shuffle=True, num_workers=os.cpu_count(), pin_memory=True,drop_last=True)
+
 testLoader = DataLoader(test_ds, batch_size=BACTH_SIZE,
 	num_workers=os.cpu_count(), pin_memory=True,drop_last=True)
 
