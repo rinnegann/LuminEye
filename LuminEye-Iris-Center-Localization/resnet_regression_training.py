@@ -27,14 +27,15 @@ from albumentations.pytorch import ToTensorV2
 from torchvision.models.feature_extraction import create_feature_extractor
 from torchvision import models
 from BaseModels.resnetModels import BB_model
+from losses.wing_loss import WingLoss
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
 
-IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/Images/"
-trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_train.csv")
-val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_val.csv")
+IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze/Images"
+trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze/mix_train.csv")
+val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze//mix_val.csv")
 
 RESIZE_AMT = 64
 BACTH_SIZE = 64
@@ -104,7 +105,7 @@ def update_optimizer(optimizer, lr):
 
 
 
-def main_training(model, optimizer, train_dl, test_dl, epochs,loss_fn):
+def main_training(model, optimizer,scheduler, train_dl, test_dl, epochs,loss_fn):
     idx = 0
 
     prev_loss = 0
@@ -150,6 +151,7 @@ def main_training(model, optimizer, train_dl, test_dl, epochs,loss_fn):
             torch.save(model, model_name)
 
         train_loss = sum_loss/total
+        scheduler.step(train_loss)
 
         train_metrics = {"train/epoch": i+1, "train/train_loss": train_loss}
 
@@ -199,12 +201,26 @@ if __name__ == '__main__':
             config=config)
     
     # loss_fn = nn.MSELoss(reduction='none')
-    loss_fn = nn.L1Loss(reduction='none')
+    # loss_fn = nn.L1Loss(reduction='none')
+    
+    # loss_fn = nn.SmoothL1Loss(reduction='none')
+    
+    loss_fn = WingLoss()
+    
     
     model = BB_model().cuda()
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameters, lr=0.006)
-
+    
     update_optimizer(optimizer, 0.001)
-    main_training(model=model,optimizer=optimizer,train_dl=trainLoader,test_dl=testLoader,epochs=n_epoch,loss_fn=loss_fn)
+    
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        config["max_learning_rate"],
+        n_epoch,
+        steps_per_epoch=len(train_ds)//BACTH_SIZE
+    )
+
+    
+    main_training(model=model,optimizer=optimizer,scheduler=scheduler,train_dl=trainLoader,test_dl=testLoader,epochs=n_epoch,loss_fn=loss_fn)
                 

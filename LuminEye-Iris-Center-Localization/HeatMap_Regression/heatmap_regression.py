@@ -35,12 +35,14 @@ import albumentations as A
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision import models
 import wandb
-from unet_model import UNET
+import sys
+sys.path.append("../BaseModels")
+from  unet_model import UNET
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 
-BACTH_SIZE = 8
+BACTH_SIZE = 128
 
 RESIZE_AMT = 64
 

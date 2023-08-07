@@ -25,15 +25,15 @@ class BB_model(nn.Module):
 
         
         
-        # self.bb = nn.Sequential(
-        #                         nn.Linear(512,256),
-        #                         nn.BatchNorm1d(256),
-        #                         nn.ReLU(inplace=True),
-        #                         nn.Linear(256,128),
-        #                         nn.BatchNorm1d(128),
-        #                         nn.ReLU(inplace=True),
-        #                         nn.Linear(128,2),
-        #                         )
+        self.bb = nn.Sequential(
+                                nn.Linear(512,256),
+                                nn.BatchNorm1d(256),
+                                nn.ReLU(inplace=True),
+                                nn.Linear(256,128),
+                                nn.BatchNorm1d(128),
+                                nn.ReLU(inplace=True),
+                                nn.Linear(128,2),
+                                )
         
     def forward(self,x):
         x = self.features1(x) # 1, 128, 32, 32
