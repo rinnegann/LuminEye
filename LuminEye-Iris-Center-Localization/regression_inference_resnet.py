@@ -140,11 +140,11 @@ def cropped_image(img, shape_array, padded_amt=30):
             "bottom_right": shape_array[263]}
 
     left_eye = img[Leye["top_left"][1]:Leye["bottom_right"][1] +
-                   15
+                   padded_amt
                    , Leye["top_left"][0]:Leye["bottom_right"][0]]
 
     right_eye = img[Reye["top_left"][1]:Reye["bottom_right"][1] +
-                    15, Reye["top_left"][0]:Reye["bottom_right"][0]]
+                    padded_amt, Reye["top_left"][0]:Reye["bottom_right"][0]]
     
     
     
@@ -224,7 +224,9 @@ if __name__ == '__main__':
     # regression_model_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Segmentation/Regression_model_1.140251636505127.pth"
     
     # Mix Dataset
-    regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/Regression_model_1.487574208665777.pth'
+    # regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/Regression_model_1.487574208665777.pth'
+    
+    regression_model_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/BEST_RESNET_REGRESSION_MODEL_FOR_CROPPED_EYES/Regression_model_1.3835772452531037.pth"
     
     
     # H2DATASET WITH Efficientenet
