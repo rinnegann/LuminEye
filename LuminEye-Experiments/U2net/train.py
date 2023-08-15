@@ -36,6 +36,34 @@ device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Available devices:{device}")
 
 n_classes = 2
+RESIZE_AMT = 256
+
+train_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/YoloCroppedEyes/train_imgs"
+train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/YoloCroppedEyes/train_masks/"
+
+
+val_images = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/YoloCroppedEyes/val_imgs/"
+
+val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/YoloCroppedEyes/val_masks/"
+
+
+train_x = sorted(
+        glob(f"{train_images}/*"))
+train_y = sorted(
+        glob(f"{train_masks}/*"))
+valid_x = sorted(
+        glob(f"{val_images}/*"))
+valid_y = sorted(
+        glob(f"{val_masks }/*"))
+
+
+
+
+
+
+
+
+
 
 def multi_dice_loss_function(y0, y1, y2,y3, y4, y5, y6,y):
     loss_1 = DiceBceLoss(y, y0)
@@ -100,8 +128,8 @@ class UBRIS:
         return len(self.image_path)
     
     def __getitem__(self,idx):
-        img = cv2.resize(cv2.cvtColor(cv2.imread(self.image_path[idx]) , cv2.COLOR_BGR2RGB),(512,512))
-        target = cv2.resize(cv2.imread(self.target_path[idx] , cv2.IMREAD_GRAYSCALE),(512,512))
+        img = cv2.resize(cv2.cvtColor(cv2.imread(self.image_path[idx]) , cv2.COLOR_BGR2RGB),(RESIZE_AMT,RESIZE_AMT))
+        target = cv2.resize(cv2.imread(self.target_path[idx] , cv2.IMREAD_GRAYSCALE),(RESIZE_AMT,RESIZE_AMT))
         
         target = np.where( target > 0,255,0)
         
@@ -129,27 +157,11 @@ mean = [0.485 ,0.456 ,0.406]
 std = [0.229 , 0.224 , 0.225]
 
 
-train_images = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/train_img"
-train_masks  = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/train_masks"
 
-
-val_images = "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/val_img"
-
-val_masks =  "/home/nipun/Documents/Uni_Malta/Datasets/ShortDatasetTesting/val_masks" 
-
-
-train_x = sorted(
-        glob(f"{train_images}/*"))
-train_y = sorted(
-        glob(f"{train_masks}/*"))
-valid_x = sorted(
-        glob(f"{val_images}/*"))
-valid_y = sorted(
-        glob(f"{val_masks }/*"))
 
 train_transform = A.Compose(
         [
-            A.Resize(512,512),
+            A.Resize(RESIZE_AMT,RESIZE_AMT),
             A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2,
                                rotate_limit=30, p=0.5),
             A.RGBShift(r_shift_limit=25, g_shift_limit=25,
@@ -165,14 +177,14 @@ train_transform = A.Compose(
     )
         
 val_transform = A.Compose(
-        [A.Resize(512,512)]
+        [A.Resize(RESIZE_AMT,RESIZE_AMT)]
     )
 
 
 train_set = UBRIS(train_x,train_y,mean, std,transform=train_transform)
 val_set = UBRIS(valid_x ,valid_y,mean , std,transform=val_transform)
 
-batch_size = 1
+batch_size = 2
 train_loader= DataLoader(train_set , batch_size= batch_size , shuffle =True,drop_last=True)
 val_loader = DataLoader(val_set , batch_size = batch_size , shuffle =False,drop_last=True)
 
@@ -189,7 +201,7 @@ model = U2NET(in_ch=3,out_ch=2)
 
 model=model.to(device)
 
-# print(next(model.parameters()).device)
+
 
 
 
@@ -289,7 +301,7 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             # output = model(image)
             
             #Multi DiceBceLoss
-            # loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
+            loss_1,loss = multi_dice_loss_function(y0, y1, y2, y3, y4, y5, y6, mask)
             
             #Multi Focal losss
             # loss_1,loss = multi_focal_losss(y0, y1, y2, y3, y4, y5, y6, mask)
@@ -298,11 +310,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
             # loss_1,loss = multi_tversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             # Multi Distance Binary Loss
-            loss_1,loss = multi_distBinary_loss(y0, y1, y2, y3, y4, y5, y6, mask)
+            # loss_1,loss = multi_distBinary_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             
             # Multi Focal Tversky Loss
-            loss_1,loss  = multi_focaltversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
+            # loss_1,loss  = multi_focaltversky_loss(y0, y1, y2, y3, y4, y5, y6, mask)
             
             #evaluation metrics
             iou_score += IoU(y0, mask)
@@ -344,11 +356,11 @@ def fit(epochs, model, train_loader, val_loader, optimizer, scheduler, patch=Fal
                     test_accuracy += pixel_wise_accuracy(y0_l, mask)
                     #loss
                     
-                    # loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    loss_1,loss = multi_dice_loss_function(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
                     #loss_1,loss = multi_distBinary_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
-                    loss_1,loss = multi_focaltversky_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
+                    # loss_1,loss = multi_focaltversky_loss(y0_l, y1_l, y2_l, y3_l, y4_l, y5_l, y6_l, mask)
                     
                                                     
                     test_loss += loss.item()
