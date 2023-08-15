@@ -417,127 +417,146 @@ def cornerY(innerEyeCorner_y, pivot_y, phi):
 
 
 
-
-def main(visualize_iris=True,enhance=True):
+def initialization_function(frame,frameCounter,visualize=True,enhance=False):
+    
+    # MediaPipe
+    shape_array = captureFaceLandmarks(frame)
+    
+    meanWidth, symmAxis_x, piyot_y, R = calculateParameters(shape_array)
+    
+    left_eye, right_eye,Leye,Reye = cropped_image(frame, shape_array,enhance=False)
+    
+    # Prediction from the model for both eyes
+    pred_l_eye,pred_r_eye = predict_image_masku2net(IRIS_MODEL,left_eye),predict_image_masku2net(IRIS_MODEL, right_eye)
     
     
-    vid = cv2.VideoCapture(0)
+    print(f"Right Eye shape:- {right_eye.shape}")
+    print(f"Left Eye shape:- {left_eye.shape}")
     
-    frameCounter = 0
-    
-    while True:
-
-        ret, frame = vid.read()
-        
-        
-        
-        # MediaPipe
-        shape_array = captureFaceLandmarks(frame)
-        
-        meanWidth, symmAxis_x, piyot_y, R = calculateParameters(shape_array)
-        
-        
-        left_eye, right_eye,Leye,Reye = cropped_image(frame, shape_array,enhance=False)
-        
-        
-        
-        
-        
-        # Prediction from the model for both eyes
-        pred_l_eye,pred_r_eye = predict_image_masku2net(IRIS_MODEL,left_eye),predict_image_masku2net(IRIS_MODEL, right_eye)
-        
-        print(f"Right Eye shape:- {right_eye.shape}")
-        print(f"Left Eye shape:- {left_eye.shape}")
-        
-        
-        if visualize_iris:
-                
-                
+    if visualize:
             
                 try:
                     frame = drawContours(frame,pred_l_eye,h=left_eye.shape[0]/2 if enhance else left_eye.shape[0],w=left_eye.shape[1]/2 if enhance else left_eye.shape[1],margin=Leye)
                     frame = drawContours(frame,pred_r_eye,h=right_eye.shape[0]/2 if enhance else right_eye.shape[0],w=(right_eye.shape[1]/2) if enhance else right_eye.shape[1],margin=Reye)
                 except IndexError:
                     pass
+    
+    r = hpe.compute_rotation(shape_array)
         
-        r = hpe.compute_rotation(shape_array)
+    theta, phi, roll, yaw_deg, pitch_deg, roll_deg = hpe.compute_angles(r, frameCounter)
+    
+    
+    
+    # Inner Iris X and Y coordinate of Right eye
+    innerEyeCorner_right_x = shape_array[362][0]
+    innerEyeCorner_right_y = shape_array[362][1]
+
+    # Outer Iris X and Y coordinate of Right eye
+    outerEyeCorner_right_x = shape_array[263][0]
+    outerEyeCorner_right_y = shape_array[263][1]
+
+    # Inner Iris X and Y coordinate of Left eye
+    innerEyeCorner_left_x = shape_array[133][0]
+    innerEyeCorner_left_y = shape_array[133][1]
+
+    # Outer Iris X and Y coordinate of Left eye
+    outerEyeCorner_left_x = shape_array[33][0]
+    outerEyeCorner_left_y = shape_array[33][1]
+    
+    
+    innerEyeCornerRot_right_x = cornerX(innerEyeCorner_x=innerEyeCorner_right_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
+    innerEyeCornerRot_right_y = cornerY(innerEyeCorner_y=innerEyeCorner_right_y, pivot_y=piyot_y, phi=phi)
+
+    innerEyeCornerRot_left_x = cornerX(innerEyeCorner_x=innerEyeCorner_left_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
+    innerEyeCornerRot_left_y = cornerY(innerEyeCorner_y=innerEyeCorner_left_y, pivot_y=piyot_y, phi=phi)
+    
+    
+    
+    l_rad_iris,l_cx,l_cy=findRadiusIris(pred_l_eye,eye_w=left_eye.shape[1],eye_h=left_eye.shape[0],margin=Leye)
+    r_rad_iris,r_cx,r_cy=findRadiusIris(pred_r_eye,eye_w=right_eye.shape[1],eye_h=right_eye.shape[0],margin=Reye)
+    
+    
+    
+    l_rad_iris,l_cx,l_cy=findRadiusIris(pred_l_eye,eye_w=left_eye.shape[1],eye_h=left_eye.shape[0],margin=Leye)
+    r_rad_iris,r_cx,r_cy=findRadiusIris(pred_r_eye,eye_w=right_eye.shape[1],eye_h=right_eye.shape[0],margin=Reye)
+    
+
+    print(f"Left Eye Radius: {l_rad_iris}")
+    
+    print(f"Right Eye Radius: {r_rad_iris}")
         
-        theta, phi, roll, yaw_deg, pitch_deg, roll_deg = hpe.compute_angles(r, frameCounter)
+    # Fixed Eye Radius for Initial Stage
+    
+    l_rad_iris = 10
+    r_rad_iris = 10
+    
+    # # Rotation For Right Eye
+    irisRot_right_x = irisX(innerEyeCorner_x=innerEyeCorner_right_x, outerEyeCorner_x=outerEyeCorner_right_x, 
+                            symmAxis_x=symmAxis_x, r=r_rad_iris, R=R, iris_x=r_cx, theta=theta)
+    
+    irisRot_right_y = irisY(innerEyeCorner_y=innerEyeCorner_right_y, outerEyeCorner_y=outerEyeCorner_right_y, 
+                            pivot_y=piyot_y, r=r_rad_iris, iris_y=r_cy, phi=phi)
+
+
+
+    # Rotation for Left Eye
+
+    irisRot_left_x = irisX(innerEyeCorner_x=innerEyeCorner_left_x, outerEyeCorner_x=outerEyeCorner_left_x,
+                        symmAxis_x=symmAxis_x, r=l_rad_iris, R=R, iris_x=l_cx, theta=theta)
+
+    irisRot_left_y = irisY(innerEyeCorner_y=innerEyeCorner_left_y, outerEyeCorner_y=outerEyeCorner_left_y, 
+                        pivot_y=piyot_y, r=l_rad_iris, iris_y=l_cy, phi=phi)
+    
+    
+    
+    return left_eye,right_eye
+
+
+
+
+def main():
+    
+    
+    vid = cv2.VideoCapture(0)
+    
+    frameCounter = 0
+    
+    init_frame= 0 
+    
+    while True:
+
+        ret, frame = vid.read()
+        
+        
+        while init_frame<15:
             
             
+            left_eye,right_eye=initialization_function(frame,init_frame)
+            
+            
+            left_eye = cv2.resize(left_eye,(256,256))
+            right_eye = cv2.resize(right_eye,(256,256))
+            cv2.imshow("Right Eye",right_eye)
+            cv2.imshow("Left Eye",left_eye)
+                
+            
+            init_frame += 1
             
         
-        
-            
-        # Inner Iris X and Y coordinate of Right eye
-        innerEyeCorner_right_x = shape_array[362][0]
-        innerEyeCorner_right_y = shape_array[362][1]
-
-        # Outer Iris X and Y coordinate of Right eye
-        outerEyeCorner_right_x = shape_array[263][0]
-        outerEyeCorner_right_y = shape_array[263][1]
-
-        # Inner Iris X and Y coordinate of Left eye
-        innerEyeCorner_left_x = shape_array[133][0]
-        innerEyeCorner_left_y = shape_array[133][1]
-
-        # Outer Iris X and Y coordinate of Left eye
-        outerEyeCorner_left_x = shape_array[33][0]
-        outerEyeCorner_left_y = shape_array[33][1]
     
-    
-    
-        innerEyeCornerRot_right_x = cornerX(innerEyeCorner_x=innerEyeCorner_right_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
-        innerEyeCornerRot_right_y = cornerY(innerEyeCorner_y=innerEyeCorner_right_y, pivot_y=piyot_y, phi=phi)
-
-        innerEyeCornerRot_left_x = cornerX(innerEyeCorner_x=innerEyeCorner_left_x, symmAxis_x=symmAxis_x, R=R, theta=theta)
-        innerEyeCornerRot_left_y = cornerY(innerEyeCorner_y=innerEyeCorner_left_y, pivot_y=piyot_y, phi=phi)
-        
-        
-        
-        l_rad_iris,l_cx,l_cy=findRadiusIris(pred_l_eye,eye_w=left_eye.shape[1],eye_h=left_eye.shape[0],margin=Leye)
-        r_rad_iris,r_cx,r_cy=findRadiusIris(pred_r_eye,eye_w=right_eye.shape[1],eye_h=right_eye.shape[0],margin=Reye)
-        
-    
-        print(f"Left Eye Radius: {l_rad_iris}")
-        
-        print(f"Right Eye Radius: {r_rad_iris}")
-            
-        # Fixed Eye Radius for Initial Stage
-        
-        l_rad_iris = 10
-        r_rad_iris = 10
-        
-        # # Rotation For Right Eye
-        irisRot_right_x = irisX(innerEyeCorner_x=innerEyeCorner_right_x, outerEyeCorner_x=outerEyeCorner_right_x, 
-                                symmAxis_x=symmAxis_x, r=r_rad_iris, R=R, iris_x=r_cx, theta=theta)
-        
-        irisRot_right_y = irisY(innerEyeCorner_y=innerEyeCorner_right_y, outerEyeCorner_y=outerEyeCorner_right_y, 
-                                pivot_y=piyot_y, r=r_rad_iris, iris_y=r_cy, phi=phi)
-    
-    
-    
-        # Rotation for Left Eye
-
-        irisRot_left_x = irisX(innerEyeCorner_x=innerEyeCorner_left_x, outerEyeCorner_x=outerEyeCorner_left_x,
-                            symmAxis_x=symmAxis_x, r=l_rad_iris, R=R, iris_x=l_cx, theta=theta)
-
-        irisRot_left_y = irisY(innerEyeCorner_y=innerEyeCorner_left_y, outerEyeCorner_y=outerEyeCorner_left_y, 
-                            pivot_y=piyot_y, r=l_rad_iris, iris_y=l_cy, phi=phi)
-        
         frameCounter += 1
-        print(frameCounter)
+        # print(frameCounter)
         
         cv2.imshow("Frame", frame)
         
         
-        left_eye = cv2.resize(left_eye,(512,512))
-        right_eye = cv2.resize(right_eye,(512,512))
-        cv2.imshow("Right Eye",right_eye)
-        cv2.imshow("Left Eye",left_eye)
+        # left_eye = cv2.resize(left_eye,(512,512))
+        # right_eye = cv2.resize(right_eye,(512,512))
+        # cv2.imshow("Right Eye",right_eye)
+        # cv2.imshow("Left Eye",left_eye)
         
 
-        if cv2.waitKey(1) and 0xFF == ord('q') or frameCounter ==10:
+        if cv2.waitKey(1) and 0xFF == ord('q'):
             break
         
     vid.release()
@@ -547,7 +566,7 @@ def main(visualize_iris=True,enhance=True):
 if __name__ == '__main__':
     
     
-    # eye_segmentation_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/U2NET_MULTICLASS_IMG_256_DIC_batch_8/Miche_model_2023_04_11_22:14:26_val_iou0.900.pt" 
+    eye_segmentation_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/U2net/U2NET_MULTICLASS_IMG_256_DIC_batch_8/Miche_model_2023_04_11_22:14:26_val_iou0.900.pt" 
     
     
     
@@ -556,4 +575,4 @@ if __name__ == '__main__':
     
     
     
-    main(visualize_iris=True,enhance=False)
+    main()
