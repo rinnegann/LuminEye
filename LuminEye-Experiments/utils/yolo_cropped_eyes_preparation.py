@@ -63,7 +63,7 @@ if not os.path.exists(saved_mask_location):
     
     
     
-def main(images,masks):
+def main(images,masks,visualize=False):
     padded_amt = 5
     pad_top_left_y1 = 15
     pad_bottom_right_x2 = 7
@@ -71,6 +71,19 @@ def main(images,masks):
 
 
     rows = len(valid_x)
+    
+    
+    
+    
+    # fig,axes = plt.subplots(5,4,figsize=(15,15))
+
+
+
+    # axes[0,0].set_title("YOLO Pred")
+    # axes[0,1].set_title("GT Mask")
+    # axes[0,2].set_title("Cropped Img")
+    # axes[0,3].set_title("Cropped Mask")
+
 
 
     for z,(img_path,mask_path) in enumerate(zip(images,masks)):
@@ -106,10 +119,8 @@ def main(images,masks):
             y2 = round((round(row["ymax"])/h) * RESIZE_AMT)
         
     
-        print(x1,image_resized.shape[1])
-
-        print()
-        # draw_image = image_resized.copy()
+       
+        draw_image = image_resized.copy()
         
         if y1<pad_top_left_y1:
             pad_top_left_y1 = y1 
@@ -119,9 +130,26 @@ def main(images,masks):
         cropped_img = image_resized[y1-pad_top_left_y1:y2+padded_amt,x1-padded_amt:x2+pad_bottom_right_x2]
         
         cropped_mask = mask_resized[y1-pad_top_left_y1:y2+padded_amt,x1-padded_amt:x2+pad_bottom_right_x2]
-        
+        cropped_mask = np.where(cropped_mask>0,255,0)
         
         image_name = img_path.split("/")[-1]
+        
+        
+        
+        # if visualize:
+            
+            
+        #     axes[z,0].imshow(draw_image[:,:,::-1])
+        #     axes[z,1].imshow(mask_resized)
+        #     axes[z,2].imshow(cropped_img[:,:,::-1])
+        #     axes[z,3].imshow(cropped_mask)
+    
+    
+        #     axes[z,0].axis("off")
+        #     axes[z,1].axis("off")
+        #     axes[z,2].axis("off")
+        #     axes[z,3].axis("off")
+            
 
 
         print(cropped_img.shape)
