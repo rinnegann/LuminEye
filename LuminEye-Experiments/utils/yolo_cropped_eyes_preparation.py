@@ -59,8 +59,9 @@ if not os.path.exists(saved_mask_location):
 
 
 def main(images, masks, visualize=False):
-    padded_amt = 5
-    pad_top_left_y1 = 15
+    padded_amt = 15
+
+    pad_top_left_y1 = 20
     pad_bottom_right_x2 = 7
     RESIZE_AMT = 256
 
