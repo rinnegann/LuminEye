@@ -56,66 +56,38 @@ if not os.path.exists(saved_img_location):
 
 if not os.path.exists(saved_mask_location):
     os.makedirs(saved_mask_location)
-    
-    
+
+
 def find_contours(image):
-    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     median = cv2.medianBlur(gray, 5)
-        
+
     edge_detected_image = cv2.Canny(median, 0, 200)
-    
 
+    contours, hierarchy = cv2.findContours(
+        edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
     return contours
 
 
 def main(images, masks, visualize=False):
-    padded_amt = 15
 
-    pad_top_left_y1 = 20
-    pad_bottom_right_x2 = 7
     RESIZE_AMT = 256
 
-    rows = len(valid_x)
+    for z, (img_path, mask_path) in enumerate(zip(valid_x, valid_y)):
 
-
-
-    for z, (img_path, mask_path) in enumerate(zip(images, masks)):
+        pad_top_x1 = 50
+        pad_bottom_y2 = 50
+        pad_top_left_y1 = 30
+        pad_bottom_right_x2 = 15
 
         image = cv2.imread(img_path)
 
-        print(img_path)
         h, w = image.shape[:2]
 
         mask = cv2.imread(mask_path)
 
-        contour_img = np.zeros_like(image)
-
-        contours = find_contours(mask)
-
-        max_area = {}
-        for contour in contours:
-
-            approx = cv2.approxPolyDP(
-                contour, 0.01*cv2.arcLength(contour, True), True)
-            area = cv2.contourArea(contour)
-            # print(area)
-            if ((len(approx) > 8) & (len(approx) < 23) & (area > 30)):
-
-                max_area[area] = contour
-
-        x = sorted(max_area, key=lambda x: x)
-        
-        print(x)
-
-        max_contour = max_area[x[-1]]
-        min_contour = max_area[x[1]]
-
-        cv2.drawContours(contour_img, [max_contour], 0, (255, 255, 255), -1)
-
-        cv2.drawContours(contour_img, [min_contour], 0, (0, 0, 0), -1)
+        print(img_path)
 
         results = model(image[:, :, ::-1], size=640)
 
@@ -132,35 +104,49 @@ def main(images, masks, visualize=False):
             y1 = round(row["ymin"])
             x2 = round(row["xmax"])
             y2 = round(row["ymax"])
-
+        print(image.shape)
+        print(x1, y1, x2, y2)
         copy_img = image.copy()
 
-        if y1 < pad_top_left_y1:
+        if (y1 - pad_top_left_y1) < 0:
             pad_top_left_y1 = y1
 
-        elif x1 < padded_amt:
-            padded_amt = x1
-        cropped_img = copy_img[y1-pad_top_left_y1:y2 +
-                               padded_amt, x1-padded_amt:x2+pad_bottom_right_x2]
+        if (x1-pad_top_x1) < 0:
+            pad_top_x1 = x1
 
-        cropped_mask = contour_img[y1-pad_top_left_y1:y2 +
-                                   padded_amt, x1-padded_amt:x2+pad_bottom_right_x2]
+        cropped_img = copy_img[y1-pad_top_left_y1:y2 +
+                               pad_bottom_y2, x1-pad_top_x1:x2+pad_bottom_right_x2]
+
+        cropped_mask = mask[y1-pad_top_left_y1:y2 +
+                            pad_bottom_y2, x1-pad_top_x1:x2+pad_bottom_right_x2]
         cropped_mask = np.where(cropped_mask > 0, 255, 0)
 
         image_name = img_path.split("/")[-1]
         mask_name = mask_path.split("/")[-1]
 
-        draw_img = cropped_img.copy()
+        # draw_img = cropped_img.copy()
 
-        gt_contours = find_contours(cropped_mask.astype(np.uint8))
+        # gt_contours  = find_contours(cropped_mask.astype(np.uint8))
 
-        for gt_cnt in gt_contours:
-            cv2.drawContours(draw_img, [gt_cnt],  -1, (0, 255, 0), 1)
+        # for gt_cnt in gt_contours:
+        #         cv2.drawContours(cropped_img, [gt_cnt],  -1, (0,255,0), 1)
 
-        cv2.imwrite(os.path.join(saved_img_location, image_name), draw_img)
+        # for gt_cnt in gt_contours:
+        #     cv2.drawContours(draw_img, [gt_cnt],  -1, (0, 255, 0), 1)
+
+        cv2.imwrite(os.path.join(saved_img_location, image_name), cropped_img)
         cv2.imwrite(os.path.join(
             saved_mask_location, mask_name), cropped_mask)
 
+        # plt.imshow(cropped_img[:,:,::-1])
+        # plt.show()
+
+        # plt.imshow(cropped_mask)
+        # plt.show()
+
+        # if z==50:
+        #     break
+
 
 if __name__ == "__main__":
-    main(train_x, train_y)
+    main(valid_x, valid_y)
