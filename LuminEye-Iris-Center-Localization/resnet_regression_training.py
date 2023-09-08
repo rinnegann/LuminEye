@@ -27,18 +27,32 @@ from albumentations.pytorch import ToTensorV2
 from torchvision.models.feature_extraction import create_feature_extractor
 from torchvision import models
 from BaseModels.resnetModels import BB_model
+
+from BaseModels.efficientnetModels import BB_model
 from losses.wing_loss import WingLoss
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
 
-IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze/Images"
-trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze/mix_train.csv")
-val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze//mix_val.csv")
+IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/images"
+trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/trainAll.csv")
 
+
+mask = np.random.randn(len(trn_df)) < 0.8
+
+
+val_df = trn_df[~mask]
+
+trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/valAll.csv")
+
+
+
+
+
+print(trn_df.head())
 RESIZE_AMT = 64
-BACTH_SIZE = 64
+BACTH_SIZE = 32
 
 train_transforms =  A.Compose([
     A.Resize(width=RESIZE_AMT,height=RESIZE_AMT),
@@ -51,6 +65,56 @@ val_transforms =  A.Compose([
     A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
     ToTensorV2(p=1)
 ])
+
+
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, patience=20, verbose=False, delta=0, path='checkpoint.pt', trace_func=print):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement. 
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+            path (str): Path for the checkpoint to be saved to.
+                            Default: 'checkpoint.pt'
+            trace_func (function): trace print function.
+                            Default: print            
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+        self.path = path
+        self.trace_func = trace_func
+    def __call__(self, val_loss, model):
+
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+            self.counter = 0
+
+    def save_checkpoint(self, val_loss, model):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose:
+            self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+        torch.save(model, self.path)
+        self.val_loss_min = val_loss
 
 
 class CenterDataset(torch.utils.data.Dataset):
@@ -109,6 +173,8 @@ def main_training(model, optimizer,scheduler, train_dl, test_dl, epochs,loss_fn)
     idx = 0
 
     prev_loss = 0
+    
+    early_stopping = EarlyStopping(verbose=True)
     for i in range(epochs):
         model.train()
         total = 0
@@ -141,27 +207,36 @@ def main_training(model, optimizer,scheduler, train_dl, test_dl, epochs,loss_fn)
             sum_loss += loss.item()
 
         val_loss = val_epochs(model, test_dl,loss_fn)
-
-        if i == 0:
-            prev_loss = val_loss
-        if val_loss < prev_loss:
-            prev_loss = val_loss
-
-            model_name = f"Regression_model_{str(prev_loss)}.pth"
-            torch.save(model, model_name)
-
+        
         train_loss = sum_loss/total
         scheduler.step(train_loss)
 
-        train_metrics = {"train/epoch": i+1, "train/train_loss": train_loss}
-
-        val_metrics = {"val/epoch": i+1, "val/val_loss": val_loss}
-        wandb.log({**train_metrics, **val_metrics})
-
+        early_stopping(val_loss,model)
+        
+        train_loss = sum_loss/total
+        scheduler.step(train_loss)
+        
+        
         print(f"Epoch Number {i+1}")
         print("train_loss %.3f " % (train_loss))
         print("Validation Loss %.3f " % (val_loss))
         print("*"*8)
+        
+        
+        if early_stopping.early_stop:
+            print("Early stopping")
+            
+            train_metrics = {"train/epoch": i+1, "train/train_loss": train_loss}
+
+            val_metrics = {"val/epoch": i+1, "val/val_loss": val_loss}
+            wandb.log({**train_metrics, **val_metrics})
+            break
+
+        
+
+        
+
+        
         
         
 def val_epochs(model,val_loader,loss_fn):
@@ -190,27 +265,31 @@ def val_epochs(model,val_loader,loss_fn):
 if __name__ == '__main__':
     
 
-    n_epoch = 500
+    n_epoch = 100
     
     config = {"epochs":n_epoch ,
                         "max_learning_rate":0.006}
 
 
+    # experiment_name = f"Regression_Resnet__epoch_{n_epoch}_mae_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}_for_gi4e_bioid_h2head"
+    
+    experiment_name = "checkValidationDataInCorrectFormat"
+
     wandb.init(project="LuminEys-Iris",entity="rinnegann",
-            name=f"Regression_Resnet__epoch_{n_epoch}_mae_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}_for_gi4e_bioid_h2head",
+            name=experiment_name,
             config=config)
     
     # loss_fn = nn.MSELoss(reduction='none')
     # loss_fn = nn.L1Loss(reduction='none')
     
-    # loss_fn = nn.SmoothL1Loss(reduction='none')
+    loss_fn = nn.SmoothL1Loss(reduction='none')
     
-    loss_fn = WingLoss()
+    # loss_fn = WingLoss()
     
     
     model = BB_model().cuda()
     parameters = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = torch.optim.Adam(parameters, lr=0.006)
+    optimizer = torch.optim.AdamW(parameters, lr=0.006)
     
     update_optimizer(optimizer, 0.001)
     
@@ -223,4 +302,3 @@ if __name__ == '__main__':
 
     
     main_training(model=model,optimizer=optimizer,scheduler=scheduler,train_dl=trainLoader,test_dl=testLoader,epochs=n_epoch,loss_fn=loss_fn)
-                

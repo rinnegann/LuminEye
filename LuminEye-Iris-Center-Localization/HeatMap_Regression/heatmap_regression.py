@@ -42,7 +42,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 
-BACTH_SIZE = 128
+BACTH_SIZE = 32
 
 RESIZE_AMT = 64
 
@@ -53,15 +53,6 @@ trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression
 val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD_mp2gaze/mix_val.csv")
 
 
-
-def jaccard_index(y_true,y_pred):
-    """Return Mean of Jaccard Index for Batch """
-    intersection = torch.sum(torch.abs(y_pred * y_true),axis=-1)
-    union = torch.sum((torch.abs(y_true) + torch.abs(y_pred)),axis=-1)
-    smooth = 1e-5
-    jaccard_index  = torch.div(union+smooth,union-intersection+smooth)
-    
-    return jaccard_index.mean()
 
 
 
@@ -209,15 +200,9 @@ def valStep(model,testLoader):
         
         total_val_mse_loss += loss
         
-        # Jaccard-Index
-        jc_index =jaccard_index(y,y_pred).item()
-        
-        total_val_jaccard_index += jc_index
-        
-        
         total_step += 1
         
-    return total_val_mse_loss/total_step,total_val_jaccard_index/total_step
+    return total_val_mse_loss/total_step
 
 
 def main(model,trainLoader,testLoader,optimizer,epochs=100):

@@ -37,7 +37,7 @@ from torchvision import models
 
 
 df = pd.read_csv(
-    "/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/All_COORDINATES/mp2gaze_annotations.csv")
+    "/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MP2GAZE/MixCoordsAll.csv")
 
 
 
@@ -110,48 +110,56 @@ def main(dataframe,saved_dir,csvType):
         left_eye, Leye = cropeyes(img, left_inner, left_outer)
         right_eye, Reye = cropeyes(img, right_inner, right_outer)
 
-        left_center[0] = left_center[0] - Leye["top_left"][0]
-        left_center[1] = left_center[1] - Leye["top_left"][1]
+        left_center[0] = (left_center[0] - Leye["top_left"][0])/left_eye.shape[1]
+        left_center[1] = (left_center[1] - Leye["top_left"][1])/left_eye.shape[0]
 
-        right_center[0] = right_center[0] - Reye["top_left"][0]
-        right_center[1] = right_center[1] - Reye["top_left"][1]
+        right_center[0] = (right_center[0] - Reye["top_left"][0])/right_eye.shape[1]
+        right_center[1] = (right_center[1] - Reye["top_left"][1])/right_eye.shape[0]
+        
+        
+        if all(0 < k < 1 for k in left_center) and all(0 < l < 1 for l in right_center):
+            
 
-        if visualize:
+            if visualize:
 
-            cv2.circle(
-                left_eye, (left_center[0], left_center[1]), 1, (0, 0, 255), 1)
-            cv2.circle(
-                right_eye, (right_center[0], right_center[1]), 1, (0, 0, 255), 1)
+                cv2.circle(
+                    left_eye, (left_center[0], left_center[1]), 1, (0, 0, 255), 1)
+                cv2.circle(
+                    right_eye, (right_center[0], right_center[1]), 1, (0, 0, 255), 1)
 
-            fig, axs = plt.subplots(1, 2)
+                fig, axs = plt.subplots(1, 2)
 
-            axs[0].set_title("Left Eye")
-            axs[1].set_title("Right Eye")
+                axs[0].set_title("Left Eye")
+                axs[1].set_title("Right Eye")
 
-            axs[0].axis("off")
-            axs[1].axis("off")
+                axs[0].axis("off")
+                axs[1].axis("off")
 
-            axs[0].imshow(left_eye[:, :, ::-1])
-            axs[1].imshow(right_eye[:, :, ::-1])
+                axs[0].imshow(left_eye[:, :, ::-1])
+                axs[1].imshow(right_eye[:, :, ::-1])
 
-            plt.tight_layout()
-            plt.show()
-            plt.close('all')
+                plt.tight_layout()
+                plt.show()
+                plt.close('all')
 
-        image_count += 1
-        data_array.append({"Image_Name": f"{str(image_count)}_left.png",
-                           "X1": left_center[0]/left_eye.shape[1],
-                           "Y1": left_center[1]/left_eye.shape[0]})
+            image_count += 1
+            data_array.append({"Image_Name": f"{str(image_count)}_left.png",
+                            "X1": left_center[0],
+                            "Y1": left_center[1]})
 
-        data_array.append({"Image_Name": f"{str(image_count)}_right.png",
-                           "X1": right_center[0]/right_eye.shape[1],
-                           "Y1": right_center[1]/right_eye.shape[0]})
+            data_array.append({"Image_Name": f"{str(image_count)}_right.png",
+                            "X1": right_center[0],
+                            "Y1": right_center[1]})
 
-        cv2.imwrite(os.path.join(
-            saved_dir, f"{str(image_count)}_left.png"), left_eye)
+            cv2.imwrite(os.path.join(
+                saved_dir, f"{str(image_count)}_left.png"), left_eye)
 
-        cv2.imwrite(os.path.join(
-            saved_dir, f"{str(image_count)}_right.png"), right_eye)
+            cv2.imwrite(os.path.join(
+                saved_dir, f"{str(image_count)}_right.png"), right_eye)
+            
+        else:
+            print("PipeLine Return Coordinates with Minus Values")
+            continue
 
     df = pd.DataFrame(data_array, columns=cols)
 

@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mediapipe
 import pandas as pd
+import warnings
+warnings.filterwarnings("ignore",)
 
 
 def mpArrayToNumpy(landmark_array, img):
@@ -69,7 +71,7 @@ if not os.path.exists(saved_dir):
 IMG_PATH = '/home/nipun/Documents/Uni_Malta/Datasets/I2Head'
 
 df = pd.read_csv(
-    '/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/All_COORDINATES/i2head_annotations.csv')
+    '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Experiments/utils/i2head_annotations.csv')
 
 
 msk = np.random.rand(len(df)) < 0.8
@@ -125,48 +127,63 @@ def main(dataFrame,csvName,visualize=False):
             left_eye, right_eye, Leye, Reye = cropped_image(
                 img, shape_arr)
 
-            left_center[0] = float(left_center[0]) - Leye['top_left'][0]
-            left_center[1] = float(left_center[1]) - Leye['top_left'][1]
+            left_center[0] = ((float(left_center[0]) - Leye['top_left'][0]))/left_eye.shape[1]
+            left_center[1] = ((float(left_center[1]) - Leye['top_left'][1]))/left_eye.shape[0]
 
-            right_center[0] = float(right_center[0]) - Reye['top_left'][0]
-            right_center[1] = float(right_center[1]) - Reye['top_left'][1]
-
-            cv2.imwrite(os.path.join(
+            right_center[0] = ((float(right_center[0]) - Reye['top_left'][0]))/right_eye.shape[1]
+            right_center[1] = ((float(right_center[1]) - Reye['top_left'][1]))/right_eye.shape[0]
+            
+            
+            if all(0 < k < 1 for k in left_center) and all(0 < l < 1 for l in right_center):
+                
+                # print(f"Left Center {left_center}")
+                # print(f"Right Center {right_center}")
+                
+                
+                
+                cv2.imwrite(os.path.join(
                 saved_dir, f"{img_name}_left.png"), left_eye)
 
-            cv2.imwrite(os.path.join(
-                saved_dir, f"{img_name}_right.png"), right_eye)
+                cv2.imwrite(os.path.join(
+                    saved_dir, f"{img_name}_right.png"), right_eye)
+                
+                
+                data_array.append({"ImageName": f"{img_name}_left.png",
+                                "X1": float(left_center[0]),
+                                "Y1": float(left_center[1])})
 
-            if visualize:
+                data_array.append({"ImageName": f"{img_name}_right.png",
+                            "X1": float(right_center[0]),
+                            "Y1": float(right_center[1])})
+                
+                
+                if visualize:
 
-                cv2.circle(left_eye, (int(left_center[0]), int(
-                    left_center[1])), 1, (0, 0, 255), -1)
-                cv2.circle(right_eye, (int(right_center[0]), int(
-                    right_center[1])), 1, (0, 0, 255), -1)
+                    cv2.circle(left_eye, (int(left_center[0]), int(
+                        left_center[1])), 1, (0, 0, 255), -1)
+                    cv2.circle(right_eye, (int(right_center[0]), int(
+                        right_center[1])), 1, (0, 0, 255), -1)
 
-                fig, axs = plt.subplots(1, 2)
+                    fig, axs = plt.subplots(1, 2)
 
-                axs[0].set_title("Left Eye")
-                axs[1].set_title("Right Eye")
+                    axs[0].set_title("Left Eye")
+                    axs[1].set_title("Right Eye")
 
-                axs[0].axis("off")
-                axs[1].axis("off")
+                    axs[0].axis("off")
+                    axs[1].axis("off")
 
-                axs[0].imshow(left_eye[:, :, ::-1])
-                axs[1].imshow(right_eye[:, :, ::-1])
+                    axs[0].imshow(left_eye[:, :, ::-1])
+                    axs[1].imshow(right_eye[:, :, ::-1])
 
-                plt.tight_layout()
-                plt.show()
-                plt.close('all')
+                    plt.tight_layout()
+                    plt.show()
+                    plt.close('all')
+                
+            else:
+                print("Algorithn produced the minus Coordinates")
+                continue
 
-            # Normlaize the Center Coordinates before send to the CSV file
-            data_array.append({"ImageName": f"{img_name}_left.png",
-                            "X1": float(left_center[0])/left_eye.shape[1],
-                            "Y1": float(left_center[1])/left_eye.shape[0]})
-
-            data_array.append({"ImageName": f"{img_name}_right.png",
-                            "X1": float(right_center[0])/right_eye.shape[1],
-                            "Y1": float(right_center[1])/right_eye.shape[0]})
+    
 
         else:
             print(
