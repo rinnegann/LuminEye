@@ -4,15 +4,9 @@ import shutil
 import pandas as pd
 
 
-annot_path = '/home/nipun/Documents/Uni_Malta/Datasets/MPIIGaze_subset_annotations/filenames.json'
+annot_path = '/home/nipun/Documents/Uni_Malta/Datasets/I2Head_annotations/filenames.json'
 
-coord_annot = "/home/nipun/Documents/Uni_Malta/Datasets/MPIIGaze_subset_annotations/annotations.json"
-
-saved_location = "/home/nipun/Documents/Uni_Malta/Datasets/MP2GAZE"
-
-
-if not os.path.exists(saved_location):
-    os.makedirs(saved_location)
+coord_annot = "/home/nipun/Documents/Uni_Malta/Datasets/I2Head_annotations/annotations.json"
 
 
 def main(file_name,bbox_name):
@@ -55,7 +49,7 @@ def main(file_name,bbox_name):
     for x,y in zip(file_names,coords):
         df = df.append({'ImageName':x,'Coordinates':y},ignore_index=True)
         
-    df.to_csv('mp2gaze_annotations.csv')
+    df.to_csv('i2head_annotations.csv')
    
 
 if __name__ == '__main__':

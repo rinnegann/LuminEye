@@ -1,0 +1,161 @@
+2023-08-06 18:48:06,781 INFO    StreamThr :417200 [internal.py:wandb_internal():88] W&B internal server running at pid: 417200, started at: 2023-08-06 18:48:06.781250
+2023-08-06 18:48:06,782 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: status
+2023-08-06 18:48:06,784 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: status
+2023-08-06 18:48:06,785 DEBUG   SenderThread:417200 [sender.py:send():303] send: header
+2023-08-06 18:48:06,785 INFO    WriterThread:417200 [datastore.py:open_for_write():75] open: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/run-tekd7tsz.wandb
+2023-08-06 18:48:06,787 DEBUG   SenderThread:417200 [sender.py:send():303] send: run
+2023-08-06 18:48:07,447 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: check_version
+2023-08-06 18:48:07,452 INFO    SenderThread:417200 [dir_watcher.py:__init__():216] watching files in: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files
+2023-08-06 18:48:07,452 INFO    SenderThread:417200 [sender.py:_start_run_threads():928] run started: tekd7tsz with start time 1691340486.779954
+2023-08-06 18:48:07,452 DEBUG   SenderThread:417200 [sender.py:send():303] send: summary
+2023-08-06 18:48:07,452 INFO    SenderThread:417200 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2023-08-06 18:48:07,452 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: check_version
+2023-08-06 18:48:07,682 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: run_start
+2023-08-06 18:48:07,688 DEBUG   HandlerThread:417200 [meta.py:__init__():34] meta init
+2023-08-06 18:48:07,689 DEBUG   HandlerThread:417200 [meta.py:__init__():49] meta init done
+2023-08-06 18:48:07,689 DEBUG   HandlerThread:417200 [meta.py:probe():215] probe
+2023-08-06 18:48:07,698 DEBUG   HandlerThread:417200 [meta.py:_setup_git():205] setup git
+2023-08-06 18:48:07,706 DEBUG   HandlerThread:417200 [meta.py:_setup_git():212] setup git done
+2023-08-06 18:48:07,706 DEBUG   HandlerThread:417200 [meta.py:_save_pip():53] save pip
+2023-08-06 18:48:07,706 DEBUG   HandlerThread:417200 [meta.py:_save_pip():67] save pip done
+2023-08-06 18:48:07,706 DEBUG   HandlerThread:417200 [meta.py:_save_conda():74] save conda
+2023-08-06 18:48:08,453 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_created():275] file/dir created: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/conda-environment.yaml
+2023-08-06 18:48:08,453 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_created():275] file/dir created: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/requirements.txt
+2023-08-06 18:48:08,453 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_created():275] file/dir created: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-summary.json
+2023-08-06 18:48:12,102 DEBUG   HandlerThread:417200 [meta.py:_save_conda():84] save conda done
+2023-08-06 18:48:12,102 DEBUG   HandlerThread:417200 [meta.py:probe():253] probe done
+2023-08-06 18:48:12,158 DEBUG   SenderThread:417200 [sender.py:send():303] send: files
+2023-08-06 18:48:12,158 INFO    SenderThread:417200 [sender.py:_save_file():1171] saving file wandb-metadata.json with policy now
+2023-08-06 18:48:12,162 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: stop_status
+2023-08-06 18:48:12,162 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: stop_status
+2023-08-06 18:48:12,453 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/conda-environment.yaml
+2023-08-06 18:48:12,453 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_created():275] file/dir created: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-metadata.json
+2023-08-06 18:48:12,475 DEBUG   SenderThread:417200 [sender.py:send():303] send: telemetry
+2023-08-06 18:48:12,841 INFO    Thread-17 :417200 [upload_job.py:push():143] Uploaded file /tmp/tmp42obvasnwandb/dtgakxgi-wandb-metadata.json
+2023-08-06 18:48:27,476 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: stop_status
+2023-08-06 18:48:27,477 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: stop_status
+2023-08-06 18:48:35,913 DEBUG   SenderThread:417200 [sender.py:send():303] send: stats
+2023-08-06 18:48:37,458 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/config.yaml
+2023-08-06 18:48:42,804 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: stop_status
+2023-08-06 18:48:42,804 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: stop_status
+2023-08-06 18:48:51,526 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: partial_history
+2023-08-06 18:48:51,527 DEBUG   SenderThread:417200 [sender.py:send():303] send: history
+2023-08-06 18:48:51,527 DEBUG   SenderThread:417200 [sender.py:send():303] send: summary
+2023-08-06 18:48:51,528 INFO    SenderThread:417200 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2023-08-06 18:48:52,461 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-summary.json
+2023-08-06 18:48:52,461 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_created():275] file/dir created: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/output.log
+2023-08-06 18:48:54,461 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/output.log
+2023-08-06 18:48:58,084 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: stop_status
+2023-08-06 18:48:58,084 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: stop_status
+2023-08-06 18:49:06,139 DEBUG   SenderThread:417200 [sender.py:send():303] send: stats
+2023-08-06 18:49:13,407 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: stop_status
+2023-08-06 18:49:13,407 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: stop_status
+2023-08-06 18:49:15,330 DEBUG   SenderThread:417200 [sender.py:send():303] send: exit
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:send_exit():442] handling exit code: 255
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:send_exit():444] handling runtime: 67
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:send_exit():450] send defer
+2023-08-06 18:49:15,331 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,331 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 0
+2023-08-06 18:49:15,331 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 0
+2023-08-06 18:49:15,331 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 1
+2023-08-06 18:49:15,332 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,332 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 1
+2023-08-06 18:49:15,420 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,420 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 1
+2023-08-06 18:49:15,420 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 2
+2023-08-06 18:49:15,420 DEBUG   SenderThread:417200 [sender.py:send():303] send: stats
+2023-08-06 18:49:15,420 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,420 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 2
+2023-08-06 18:49:15,421 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,421 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 2
+2023-08-06 18:49:15,421 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 3
+2023-08-06 18:49:15,421 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,421 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 3
+2023-08-06 18:49:15,421 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,421 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 3
+2023-08-06 18:49:15,421 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 4
+2023-08-06 18:49:15,421 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,421 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 4
+2023-08-06 18:49:15,422 DEBUG   SenderThread:417200 [sender.py:send():303] send: summary
+2023-08-06 18:49:15,422 INFO    SenderThread:417200 [sender.py:_save_file():1171] saving file wandb-summary.json with policy end
+2023-08-06 18:49:15,422 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,422 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 4
+2023-08-06 18:49:15,422 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 5
+2023-08-06 18:49:15,422 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,422 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 5
+2023-08-06 18:49:15,422 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,423 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 5
+2023-08-06 18:49:15,423 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 6
+2023-08-06 18:49:15,423 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:15,423 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 6
+2023-08-06 18:49:15,423 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:15,423 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 6
+2023-08-06 18:49:15,466 INFO    Thread-13 :417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-summary.json
+2023-08-06 18:49:16,331 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: poll_exit
+2023-08-06 18:49:17,334 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 7
+2023-08-06 18:49:17,334 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: poll_exit
+2023-08-06 18:49:17,335 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:17,335 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 7
+2023-08-06 18:49:17,335 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:17,335 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 7
+2023-08-06 18:49:17,335 INFO    SenderThread:417200 [dir_watcher.py:finish():362] shutting down directory watcher
+2023-08-06 18:49:17,467 INFO    SenderThread:417200 [dir_watcher.py:_on_file_modified():292] file/dir modified: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/output.log
+2023-08-06 18:49:17,467 INFO    SenderThread:417200 [dir_watcher.py:finish():392] scan: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files
+2023-08-06 18:49:17,468 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/conda-environment.yaml conda-environment.yaml
+2023-08-06 18:49:17,468 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/output.log output.log
+2023-08-06 18:49:17,468 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-metadata.json wandb-metadata.json
+2023-08-06 18:49:17,468 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-summary.json wandb-summary.json
+2023-08-06 18:49:17,471 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/requirements.txt requirements.txt
+2023-08-06 18:49:17,474 INFO    SenderThread:417200 [dir_watcher.py:finish():406] scan save: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/config.yaml config.yaml
+2023-08-06 18:49:17,475 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 8
+2023-08-06 18:49:17,476 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:17,476 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 8
+2023-08-06 18:49:17,476 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:17,489 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 8
+2023-08-06 18:49:17,489 INFO    SenderThread:417200 [file_pusher.py:finish():168] shutting down file pusher
+2023-08-06 18:49:18,291 INFO    Thread-22 :417200 [upload_job.py:push():143] Uploaded file /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/config.yaml
+2023-08-06 18:49:18,331 INFO    Thread-21 :417200 [upload_job.py:push():143] Uploaded file /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/requirements.txt
+2023-08-06 18:49:18,334 INFO    Thread-19 :417200 [upload_job.py:push():143] Uploaded file /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/output.log
+2023-08-06 18:49:18,335 INFO    Thread-18 :417200 [upload_job.py:push():143] Uploaded file /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/conda-environment.yaml
+2023-08-06 18:49:18,341 INFO    Thread-20 :417200 [upload_job.py:push():143] Uploaded file /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/files/wandb-summary.json
+2023-08-06 18:49:18,542 INFO    Thread-12 (_thread_body):417200 [sender.py:transition_state():463] send defer: 9
+2023-08-06 18:49:18,543 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:18,543 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 9
+2023-08-06 18:49:18,543 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:18,544 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 9
+2023-08-06 18:49:18,544 INFO    SenderThread:417200 [file_pusher.py:join():173] waiting for file pusher
+2023-08-06 18:49:18,544 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 10
+2023-08-06 18:49:18,545 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:18,545 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 10
+2023-08-06 18:49:18,545 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:18,545 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 10
+2023-08-06 18:49:18,751 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 11
+2023-08-06 18:49:18,751 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:18,752 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 11
+2023-08-06 18:49:18,752 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:18,752 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 11
+2023-08-06 18:49:18,752 INFO    SenderThread:417200 [sender.py:transition_state():463] send defer: 12
+2023-08-06 18:49:18,754 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: defer
+2023-08-06 18:49:18,754 INFO    HandlerThread:417200 [handler.py:handle_request_defer():161] handle defer: 12
+2023-08-06 18:49:18,754 DEBUG   SenderThread:417200 [sender.py:send():303] send: final
+2023-08-06 18:49:18,755 DEBUG   SenderThread:417200 [sender.py:send():303] send: footer
+2023-08-06 18:49:18,755 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: defer
+2023-08-06 18:49:18,755 INFO    SenderThread:417200 [sender.py:send_request_defer():459] handle sender defer: 12
+2023-08-06 18:49:18,757 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: poll_exit
+2023-08-06 18:49:18,757 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: poll_exit
+2023-08-06 18:49:18,759 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: server_info
+2023-08-06 18:49:18,760 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: get_summary
+2023-08-06 18:49:18,761 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: sampled_history
+2023-08-06 18:49:18,762 DEBUG   SenderThread:417200 [sender.py:send_request():317] send_request: server_info
+2023-08-06 18:49:19,310 INFO    MainThread:417200 [wandb_run.py:_footer_history_summary_info():3377] rendering history
+2023-08-06 18:49:19,311 INFO    MainThread:417200 [wandb_run.py:_footer_history_summary_info():3409] rendering summary
+2023-08-06 18:49:19,311 INFO    MainThread:417200 [wandb_run.py:_footer_sync_info():3333] logging synced files
+2023-08-06 18:49:19,312 DEBUG   HandlerThread:417200 [handler.py:handle_request():138] handle_request: shutdown
+2023-08-06 18:49:19,313 INFO    HandlerThread:417200 [handler.py:finish():814] shutting down handler
+2023-08-06 18:49:19,754 INFO    WriterThread:417200 [datastore.py:close():279] close: /home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/HeatMap_Regression/wandb/run-20230806_184806-tekd7tsz/run-tekd7tsz.wandb
+2023-08-06 18:49:20,310 INFO    SenderThread:417200 [sender.py:finish():1331] shutting down sender
+2023-08-06 18:49:20,310 INFO    SenderThread:417200 [file_pusher.py:finish():168] shutting down file pusher
+2023-08-06 18:49:20,310 INFO    SenderThread:417200 [file_pusher.py:join():173] waiting for file pusher
+2023-08-06 18:49:20,315 INFO    MainThread:417200 [internal.py:handle_exit():78] Internal process exited

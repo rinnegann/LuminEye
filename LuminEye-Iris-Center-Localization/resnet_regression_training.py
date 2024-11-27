@@ -28,23 +28,23 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from torchvision import models
 from BaseModels.resnetModels import BB_model
 
-from BaseModels.efficientnetModels import BB_model
+from BaseModels.efficientnetModels import BB_model,CoordEfficientModel
 from losses.wing_loss import WingLoss
 device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 
 
-IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/images"
-trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/trainAll.csv")
+IMAGE_DIR = "/home/nipun/Desktop/Datasets/MixDataset/images/"
+trn_df = pd.read_csv("/home/nipun/Desktop/Datasets/MixDataset/trainAll.csv")
 
 
-mask = np.random.randn(len(trn_df)) < 0.8
+# mask = np.random.randn(len(trn_df)) < 0.8
 
 
-val_df = trn_df[~mask]
+# val_df = trn_df[~mask]
 
-trn_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/valAll.csv")
+val_df = pd.read_csv("/home/nipun/Desktop/Datasets/MixDataset/valAll.csv")
 
 
 
@@ -121,7 +121,7 @@ class CenterDataset(torch.utils.data.Dataset):
     def __init__(self,df,image_dir=IMAGE_DIR,transforms=None):
         self.image_dir = image_dir
         self.df = df
-        self.image_ids = df.Image_Name.unique()
+        self.image_ids = df.ImageName.unique()
         self.transforms = transforms
         
     def __getitem__(self,ix):
@@ -131,7 +131,7 @@ class CenterDataset(torch.utils.data.Dataset):
         
         img = cv2.imread(img_path)[:,:,::-1]
         
-        data = self.df[self.df["Image_Name"]==img_id]
+        data = self.df[self.df["ImageName"]==img_id]
         
         
         x1 = data["X1"].values[0] * RESIZE_AMT
@@ -179,7 +179,7 @@ def main_training(model, optimizer,scheduler, train_dl, test_dl, epochs,loss_fn)
         model.train()
         total = 0
         sum_loss = 0
-
+    
         for x, y_bb in train_dl:
             batch = x.shape[0]
             x = x.cuda().float()
@@ -214,8 +214,11 @@ def main_training(model, optimizer,scheduler, train_dl, test_dl, epochs,loss_fn)
         early_stopping(val_loss,model)
         
         train_loss = sum_loss/total
-        scheduler.step(train_loss)
+        scheduler.step(val_loss)
         
+        my_lr = scheduler.get_lr()
+        
+        print(my_lr)
         
         print(f"Epoch Number {i+1}")
         print("train_loss %.3f " % (train_loss))
@@ -271,9 +274,9 @@ if __name__ == '__main__':
                         "max_learning_rate":0.006}
 
 
-    # experiment_name = f"Regression_Resnet__epoch_{n_epoch}_mae_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}_for_gi4e_bioid_h2head"
+    experiment_name = f"Regression_EfficientNetWithCoordConv__epoch_{n_epoch}_smoothl1Loss_summation_batch_{BACTH_SIZE}_resize_{RESIZE_AMT}_for_gi4e_bioid_h2head_withKaimingInitialization"
     
-    experiment_name = "checkValidationDataInCorrectFormat"
+    # experiment_name = "checkValidationDataInCorrectFormat"
 
     wandb.init(project="LuminEys-Iris",entity="rinnegann",
             name=experiment_name,
@@ -286,12 +289,16 @@ if __name__ == '__main__':
     
     # loss_fn = WingLoss()
     
-    
+    # model = CoordEfficientModel(device=device).cuda()
     model = BB_model().cuda()
     parameters = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = torch.optim.AdamW(parameters, lr=0.006)
+    optimizer = torch.optim.Adam(parameters, lr=0.006)
     
     update_optimizer(optimizer, 0.001)
+    
+    
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+    #                                                        'min',patience=1,cooldown=1)
     
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,

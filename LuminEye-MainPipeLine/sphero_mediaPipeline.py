@@ -487,8 +487,8 @@ def initialization_function(frame,frameCounter,visualize=True,enhance=False):
         
     # Fixed Eye Radius for Initial Stage
     
-    l_rad_iris = 10
-    r_rad_iris = 10
+    # l_rad_iris = 10
+    # r_rad_iris = 10
     
     # # Rotation For Right Eye
     irisRot_right_x = irisX(innerEyeCorner_x=innerEyeCorner_right_x, outerEyeCorner_x=outerEyeCorner_right_x, 

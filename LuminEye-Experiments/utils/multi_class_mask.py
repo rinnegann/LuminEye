@@ -3,9 +3,9 @@ from glob import glob
 import os
 import numpy as np
 
-image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/val_img"
-mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/Miche/Miche_Dataset/val_masks"
-save_location = "Masks_with_256_val"
+image_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_img/"
+mask_path = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_masks/"
+save_location = "/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS//Masks_with_256_train"
 
 images = sorted(glob(f"{image_path}/*"))
 masks = sorted(glob(f"{mask_path}/*"))
@@ -40,18 +40,16 @@ def getting_boundary_from_mask(images,masks,save_location):
     color_map = [[0,0,0],[0,255,0],[0,0,255]]
     
     for x,y in zip(images,masks):
-        print(y)
+        
         
         image_name = x.split("/")[-1].split(".")[0]
-        image = cv2.imread(x)
+        
         
         raw_image = cv2.imread(y)
-        raw_image = cv2.cvtColor(raw_image,cv2.COLOR_BGR2RGB)
+    
         
+        # raw_image = cv2.resize(raw_image,(256,256))
         
-        raw_image = cv2.resize(raw_image,(256,256))
-        
-        ori_image = image.copy()
         
         
         
@@ -79,43 +77,57 @@ def getting_boundary_from_mask(images,masks,save_location):
                 
         
         x = sorted(max_area,key = lambda x:x)
-        print(x)
-        max_contour = max_area[x[-1]]
-        min_contour = max_area[x[1]]
+        # print(x)
+        
+        
+        try:
+            max_contour = max_area[x[-1]]
+            min_contour = max_area[x[1]]
+            
+            # print(max_contour)
+            # print(min_contour)
 
-        cv2.drawContours(bg_mask,[max_contour],0,(0,0,255),-1)
+            cv2.drawContours(bg_mask,[max_contour],0,(0,0,255),-1)
 
-        cv2.drawContours(bg_mask,[min_contour],0,(0,255,0),-1)
-    
-        # contour_list = []
-        # max_contour = 0
-        # for contour in contours:
-        #     # approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
-        #     area = cv2.contourArea(contour)
-            
-            
-        #     if area > max_contour:
-        #         cv2.drawContours(bg_mask,[contour],0,(0,0,255),-1)
-        #     else:
-        #         cv2.drawContours(bg_mask,[contour],0,(0,255,0),-1)
-            
-    
-        #     max_contour = area
+            cv2.drawContours(bg_mask,[min_contour],0,(0,255,0),-1)
+        
+            # contour_list = []
+            # max_contour = 0
+            # for contour in contours:
+            #     # approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
+            #     area = cv2.contourArea(contour)
                 
-        output_mask = []
-        for i,color in enumerate(color_map):
-            cmap = np.all(np.equal(bg_mask,color),axis=-1)
-            output_mask.append(cmap)
-        output_mask = np.stack(output_mask,axis=-1)
+                
+            #     if area > max_contour:
+            #         cv2.drawContours(bg_mask,[contour],0,(0,0,255),-1)
+            #     else:
+            #         cv2.drawContours(bg_mask,[contour],0,(0,255,0),-1)
+                
+        
+            #     max_contour = area
+                    
+            output_mask = []
+            for i,color in enumerate(color_map):
+                cmap = np.all(np.equal(bg_mask,color),axis=-1)
+                output_mask.append(cmap)
+                
+                
+            output_mask = np.stack(output_mask,axis=-1)
+            
+            
 
-        grayscale_mask = np.argmax(output_mask, axis=-1)
-        grayscale_mask = (grayscale_mask / len(color_map)) * 255
-        grayscale_mask = np.expand_dims(grayscale_mask, axis=-1)
-        grayscale_mask = encode_segmap(grayscale_mask)
-        
-        
-                        
-        cv2.imwrite(os.path.join(save_location,image_name+".png"),grayscale_mask)
+            grayscale_mask = np.argmax(output_mask, axis=-1)
+            grayscale_mask = (grayscale_mask / len(color_map)) * 255
+            grayscale_mask = np.expand_dims(grayscale_mask, axis=-1)
+            grayscale_mask = encode_segmap(grayscale_mask)
+            
+            
+            
+                            
+            cv2.imwrite(os.path.join(save_location,image_name+".png"),grayscale_mask)
+        except:
+            print(y)
+            continue                           
         
         
 

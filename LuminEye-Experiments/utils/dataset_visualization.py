@@ -1,8 +1,4 @@
-"""Copyright(C) Univercity Malta-All Rights Reserved Unauthorized copying of this file,via any medium is stricly prohibited
-   Proprietary and confidential Written by Nipun Sandamal<nipunsandamal1997@gmal.com>"""
-   
 
-        
 
 class DatasetVisualizer:
     def __init__(self, dataset_path: str, dataset_name: str):
