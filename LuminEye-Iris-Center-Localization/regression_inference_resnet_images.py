@@ -41,18 +41,26 @@ from torchvision import models
 from torchvision.models.efficientnet import efficientnet_b3
 from BaseModels.resnetModels import BB_model
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cpu"
 from PIL import Image, ImageDraw
 
 
-regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/BEST_RESNET_REGRESSION_MODEL_FOR_CROPPED_EYES/Regression_model_1.487574208665777.pth'
-
-IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/Images/"
-
-val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/mix_val.csv")
 
 
-RESIZE_AMT = 64
+# regression_model_path = '/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/BEST_RESNET_REGRESSION_MODEL_FOR_CROPPED_EYES/Regression_model_1.487574208665777.pth'
+
+regression_model_path = "/home/nipun/Documents/Uni_Malta/LuminEye/LuminEye-Iris-Center-Localization/RecentModels/SpheroPipeLine/Resnet_32_IMG_SIZE__32/Regression_model_0.25639680131442016.pth"
+
+
+
+
+IMAGE_DIR = "/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/images"
+
+val_df = pd.read_csv("/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/valAll.csv")
+
+
+RESIZE_AMT = 32
 BACTH_SIZE = 8
 
 
@@ -172,6 +180,6 @@ def main(model,test_loader,save_location):
 if __name__ == '__main__':
     
 
-    saved_location = '/home/nipun/Documents/Uni_Malta/Datasets/Center_Regression/Mix_Iris_Center_Gi42_BioId_H2HEAD/resnet_model_epoch_300'
-    regression_model = torch.load(regression_model_path)
+    saved_location = '/home/nipun/Documents/Uni_Malta/Datasets/CenterRegression/MixDataset/RecentModelForgi4ebioidI2HEAD'
+    regression_model = torch.load(regression_model_path,map_location=device)
     main(regression_model,testLoader,saved_location)

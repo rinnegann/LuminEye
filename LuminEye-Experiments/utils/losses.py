@@ -2,9 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from typing import List
+from torch import Tensor
+from torch.nn.modules.loss import _Loss
 
 
+__all__ = ["DiceLoss"]
 
+BINARY_MODE = "binary"
+MULTICLASS_MODE = "multiclass"
+MULTILABEL_MODE = "multilabel"
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
@@ -20,6 +27,8 @@ def IoU(pred , true_pred , smooth =1e-10 , n_classes=2):
     for value in range(0, n_classes):
       true_class = pred == value
       true_label = true_pred == value
+      
+      print(f"True Label: {true_label}")
 
       if true_label.long().sum().item()==0:
         iou_class.append(np.nan)
@@ -66,22 +75,6 @@ def pixel_wise_accuracy(output , mask):
     accuracy = float(correct.sum())/ float(correct.numel())#total number
   return accuracy
   
-
-from typing import List
-
-import torch
-import torch.nn.functional as F
-# from pytorch_toolbelt.utils.torch_utils import to_tensor
-from torch import Tensor
-from torch.nn.modules.loss import _Loss
-
-# from .functional import soft_dice_score
-
-__all__ = ["DiceLoss"]
-
-BINARY_MODE = "binary"
-MULTICLASS_MODE = "multiclass"
-MULTILABEL_MODE = "multilabel"
 
 
 def soft_dice_score(
@@ -162,6 +155,8 @@ class DiceLoss(_Loss):
             # Using Log-Exp as this gives more numerically stable result and does not cause vanishing gradient on
             # extreme values 0 and 1
             if self.mode == MULTICLASS_MODE:
+                
+                print(f"Y prediction {y_pred}")
                 y_pred = y_pred.log_softmax(dim=1).exp()
             else:
                 y_pred = F.logsigmoid(y_pred).exp()

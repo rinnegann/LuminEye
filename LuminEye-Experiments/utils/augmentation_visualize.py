@@ -8,6 +8,9 @@ from matplotlib import pyplot as plt
 import matplotlib.patches as patches
 
 
+image = Image.open("/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_img/C1_S1_I1.tiff")
+mask = Image.open("/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_masks/C1_S1_I1.tiff")
+
 def plot_examples(images):
     fig = plt.figure(figsize=(15,15))
     columns = 4
@@ -19,8 +22,7 @@ def plot_examples(images):
         plt.imshow(img)
     plt.show()
 
-image = Image.open("/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_img/C1_S1_I1.tiff")
-mask = Image.open("/home/nipun/Documents/Uni_Malta/Datasets/Datasets/UBRIS/train_masks/C1_S1_I1.tiff")
+
 
 transform = A.Compose(
     [

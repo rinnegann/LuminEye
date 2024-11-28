@@ -1,0 +1,1 @@
+{"train/epoch": 500, "train/train_MSE_loss": 0.01105453868707021, "val/epoch": 500, "val/val_MSE_loss": 1.9738081415494284, "val/val_Jaccard": 1.2947839339574179, "_timestamp": 1691358083.9546752, "_runtime": 17511.0417470932, "_step": 499, "_wandb": {"runtime": 17510}}
