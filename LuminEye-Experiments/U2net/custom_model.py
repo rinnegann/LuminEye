@@ -1,3 +1,8 @@
+"""
+    Paper: https://arxiv.org/pdf/2005.09007
+    Implementation got from: https://github.com/sk1123344/U-2-NET-and-U-NET/blob/main/u2net.py
+
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -109,16 +114,6 @@ class RSU6(nn.Module):#UNet06DRES(nn.Module):
         super(RSU6,self).__init__()
 
         self.rebnconvin = REBNCONV(in_ch,out_ch,dirate=1)
-
-        self.rebnconv1 = REBNCONV(out_ch,mid_ch,dirate=1)
-        self.pool1 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
-
-        self.rebnconv2 = REBNCONV(mid_ch,mid_ch,dirate=1)
-        self.pool2 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
-
-        self.rebnconv3 = REBNCONV(mid_ch,mid_ch,dirate=1)
-        self.pool3 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
-
         self.rebnconv4 = REBNCONV(mid_ch,mid_ch,dirate=1)
         self.pool4 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
 
@@ -418,10 +413,6 @@ class U2NET(nn.Module):
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
         return d0,d1,d2,d3, d4, d5, d6
-
-
-      
-    
 
 if __name__ =="__main__":
     t1 = torch.zeros((2,3,512,512), device=torch.device('cuda'))

@@ -1,34 +1,23 @@
+"""
+Loss function were obtained from here: https://github.com/LIVIAETS/boundary-loss
+"""
+
 import torch
 import torch.nn as nn
-import numpy as np
 import os
-from torch.utils.data import Dataset
-import torch
-from PIL import Image
-import matplotlib.pyplot as plt
-from albumentations.pytorch import ToTensorV2
-import albumentations as A
-import torch.nn as nn
-from torch.optim import Adam
-from tqdm import tqdm
-from glob import glob
-import segmentation_models_pytorch as smp
-import time 
-import wandb
 import sys
-import torch.functional as F
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class BoundaryLoss(nn.Module):
     def __init__(self, theta0=3, theta=5):
-            
+
         super().__init__()
 
         self.theta0 = theta0
         self.theta = theta
-
 
     def to_one_hot(self, target, size):
         n, c, h, w = size
@@ -66,19 +55,26 @@ class BoundaryLoss(nn.Module):
 
         # boundary map
         gt_b = torch.nn.functional.max_pool2d(
-            1 - one_hot_gt, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
+            1 - one_hot_gt,
+            kernel_size=self.theta0,
+            stride=1,
+            padding=(self.theta0 - 1) // 2,
+        )
         gt_b -= 1 - one_hot_gt
 
         pred_b = torch.nn.functional.max_pool2d(
-            1 - pred, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2)
+            1 - pred, kernel_size=self.theta0, stride=1, padding=(self.theta0 - 1) // 2
+        )
         pred_b -= 1 - pred
 
         # extended boundary map
         gt_b_ext = torch.nn.functional.max_pool2d(
-            gt_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
+            gt_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2
+        )
 
         pred_b_ext = torch.nn.functional.max_pool2d(
-            pred_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2)
+            pred_b, kernel_size=self.theta, stride=1, padding=(self.theta - 1) // 2
+        )
 
         # reshape
         gt_b = gt_b.view(n, c, -1)
@@ -97,6 +93,7 @@ class BoundaryLoss(nn.Module):
         loss = torch.mean(1 - BF1)
 
         return loss
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     boundaryLoss = BoundaryLoss()
