@@ -1,3 +1,8 @@
+"""
+This geomatrical model of eye gaze tracking was inpired from following code.
+https://doi.org/10.1016/j.cviu.2016.02.012
+"""
+
 import numpy as np
 
 zprev = np.zeros((468,468))
