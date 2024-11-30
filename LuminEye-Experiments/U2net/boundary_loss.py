@@ -1,3 +1,6 @@
+"""
+Loss functions were imported from here: https://github.com/JunMa11/SegLossOdyssey
+"""
 import torch
 # from ND_Crossentropy import CrossentropyND, TopKLoss
 from torch import nn

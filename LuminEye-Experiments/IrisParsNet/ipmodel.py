@@ -4,7 +4,6 @@
     
 """
 
-
 import torch
 import torch.nn as nn
 from torchvision.models.vgg import VGG
@@ -188,7 +187,7 @@ class IRISPARSENET(nn.Module):
         x_10 = self.conv_10(x_9)  # [2, 32, 512, 512]
 
         final = self.final(x_10)  # [2, 2, 512, 512]
-        
+
         return final
 
 
