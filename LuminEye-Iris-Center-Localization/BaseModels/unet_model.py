@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 
 
-
-
 def double_conv(input_channels,output_channels):
     return nn.Sequential(nn.Conv2d(input_channels,output_channels,kernel_size=3,stride=1,padding='same'),
                          nn.BatchNorm2d(output_channels),
@@ -11,7 +9,6 @@ def double_conv(input_channels,output_channels):
                          nn.Conv2d(output_channels,output_channels,kernel_size=3,stride=1,padding='same'),
                          nn.BatchNorm2d(output_channels),
                          nn.ReLU())
-    
     
 class UNET(nn.Module):
     def __init__(self,num_classes):
